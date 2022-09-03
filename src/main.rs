@@ -10,16 +10,31 @@ use vector::{Vec2, Vec3};
 const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 768;
 
-fn project_point(point3d: Vec3, fov_factor: f32) -> Vec2 {
+fn project_point(point3d: &Vec3, fov_factor: f32) -> Vec2 {
     Vec2::new(point3d.x * fov_factor / point3d.z, point3d.y * fov_factor / point3d.z)
 }
 
-fn update(cube_points: &Vec<Vec3>, projected_points: &mut Vec<Vec2>, fov_factor: f32, camera_position: &Vec3) {
-    for i in 0..cube_points.len() {
-        let mut point = cube_points[i];
-        point.z -= camera_position.z;
+fn update(
+    cube_points: &Vec<Vec3>,
+    projected_points: &mut Vec<Vec2>,
+    fov_factor: f32,
+    camera_position: &Vec3,
+    cube_rotation: &mut Vec3
+) {
+    cube_rotation.x += 0.01;
+    cube_rotation.y += 0.01;
+    cube_rotation.z += 0.01;
 
-        projected_points[i] = project_point(point, fov_factor);
+    for i in 0..cube_points.len() {
+        let point = cube_points[i];
+
+        let rotated_point = point.rotated_x(cube_rotation.x);
+        let rotated_point = rotated_point.rotated_y(cube_rotation.y);
+        let mut rotated_point = rotated_point.rotated_z(cube_rotation.z);
+
+        rotated_point.z -= camera_position.z;
+
+        projected_points[i] = project_point(&rotated_point, fov_factor);
     }
 }
 
@@ -58,6 +73,7 @@ fn main() {
     .expect("Error: Window could not be created!");
 
     let mut cube_points: Vec<Vec3> = Vec::with_capacity(9 * 9 * 9);
+
     for x in (-100i8..125).step_by(25) {
         let x = f32::from(x) / 100.0;
         for y in (-100i8..125).step_by(25) {
@@ -71,12 +87,13 @@ fn main() {
     }
 
     let mut projected_points: Vec<Vec2> = vec![Vec2::new(0.0, 0.0); 9 * 9* 9];
-    let fov_factor = 684f32;
+    let fov_factor = 650f32;
     
     let camera_position = Vec3::new(0.0, 0.0, -5.0);
+    let mut cube_rotation = Vec3::new(0.0, 0.0, 0.0);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        update(&cube_points, &mut projected_points, fov_factor, &camera_position);
+        update(&cube_points, &mut projected_points, fov_factor, &camera_position, &mut cube_rotation);
         render(&mut buffer, &mut window, &projected_points);
     }
 }
