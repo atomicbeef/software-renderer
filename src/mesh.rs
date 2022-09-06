@@ -1,7 +1,19 @@
 use crate::triangle::Face;
 use crate::vector::Vec3;
 
-pub const MESH_VERTICES: [Vec3; 8] = [
+pub struct Mesh {
+    pub vertices: Vec<Vec3>,
+    pub faces: Vec<Face>,
+    pub rotation: Vec3
+}
+
+impl Mesh {
+    pub fn new(vertices: Vec<Vec3>, faces: Vec<Face>, rotation: Vec3) -> Self {
+        Self { vertices, faces, rotation }
+    }
+}
+
+pub const CUBE_VERTICES: [Vec3; 8] = [
     Vec3::new(-1.0, -1.0, -1.0),
     Vec3::new(-1.0, 1.0, -1.0),
     Vec3::new(1.0, 1.0, -1.0),
@@ -12,7 +24,7 @@ pub const MESH_VERTICES: [Vec3; 8] = [
     Vec3::new(-1.0, -1.0, 1.0)
 ];
 
-pub const MESH_FACES: [Face; 6 * 2] = [
+pub const CUBE_FACES: [Face; 6 * 2] = [
     // Front
     Face::new(0, 1, 2),
     Face::new(0, 2, 3),
