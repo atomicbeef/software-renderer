@@ -4,6 +4,12 @@ pub struct Vec2 {
     pub y: f32
 }
 
+impl Default for Vec2 {
+    fn default() -> Self {
+        Self { x: 0.0, y: 0.0 }
+    }
+}
+
 impl Vec2 {
     pub fn new(x: f32, y: f32) -> Self { 
         Self { x, y }
@@ -18,7 +24,7 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn new(x: f32, y: f32, z: f32) -> Self { 
+    pub const fn new(x: f32, y: f32, z: f32) -> Self { 
         Self { x, y, z }
     }
 
