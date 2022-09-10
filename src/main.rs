@@ -1,13 +1,18 @@
+use std::env;
+use std::path::Path;
+use std::process::ExitCode;
+
 use minifb::{Key, Window, WindowOptions};
 
 mod color_buffer;
 mod drawing;
 mod mesh;
+mod obj;
 mod triangle;
 mod vector;
 
 use color_buffer::ColorBuffer;
-use mesh::{Mesh, CUBE_FACES, CUBE_VERTICES};
+use mesh::Mesh;
 use triangle::Triangle;
 use vector::{Vec2, Vec3};
 
@@ -85,7 +90,15 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &V
     buffer.clear(0x00000000);
 }
 
-fn main() {
+fn main() -> ExitCode {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() != 2 {
+        eprintln!("Error: Incorrect arguments specified!");
+        println!("Usage: software-renderer <mesh>");
+        return ExitCode::from(1);
+    }
+
     let mut buffer = ColorBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     let mut window = Window::new(
@@ -96,7 +109,8 @@ fn main() {
     )
     .expect("Error: Window could not be created!");
 
-    let mut mesh = Mesh::new(CUBE_VERTICES.into(), CUBE_FACES.into(), Vec3::new(0.0, 0.0, 0.0));
+    let mesh_path = Path::new(&args[1]);
+    let mut mesh = Mesh::from_obj(mesh_path);
 
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
     let fov_factor = 650f32;
@@ -107,4 +121,6 @@ fn main() {
         update(&mut triangles_to_render, fov_factor, &camera_position, &mut mesh);
         render(&mut buffer, &mut window, &triangles_to_render);
     }
+
+    return ExitCode::from(0);
 }
