@@ -44,14 +44,32 @@ fn update(
 
         let mut triangle = Triangle::new(Vec2::default(), Vec2::default(), Vec2::default());
 
+        // Transform
+        let mut transformed_vertices: [Vec3; 3] = [Vec3::default(); 3];
         for (i, vertex) in face_vertices.iter().enumerate() {
             let transformed_vertex = vertex.rotated_x(mesh.rotation.x);
             let transformed_vertex = transformed_vertex.rotated_y(mesh.rotation.y);
             let mut transformed_vertex = transformed_vertex.rotated_z(mesh.rotation.z);
 
-            transformed_vertex.z -= camera_position.z;
+            transformed_vertex.z += 5.0;
 
-            let mut projected_vertex = project_point(&transformed_vertex, fov_factor);
+            transformed_vertices[i] = transformed_vertex;
+        }
+
+        // Backface cull
+        let ab = transformed_vertices[1] - transformed_vertices[0];
+        let ac = transformed_vertices[2] - transformed_vertices[0];
+        let normal = ab.cross(&ac);
+        
+        let camera_ray = *camera_position - transformed_vertices[0];
+
+        if normal.dot(&camera_ray) < 0.0 {
+            continue;
+        }
+
+        // Project
+        for (i, transformed_vertex) in transformed_vertices.iter().enumerate() {
+            let mut projected_vertex = project_point(transformed_vertex, fov_factor);
 
             projected_vertex.x += (WINDOW_WIDTH / 2) as f32;
             projected_vertex.y += (WINDOW_HEIGHT / 2) as f32;
@@ -115,7 +133,7 @@ fn main() -> ExitCode {
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
     let fov_factor = 650f32;
     
-    let camera_position = Vec3::new(0.0, 0.0, -5.0);
+    let camera_position = Vec3::new(0.0, 0.0, 0.0);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         update(&mut triangles_to_render, fov_factor, &camera_position, &mut mesh);
