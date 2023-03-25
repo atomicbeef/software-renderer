@@ -13,11 +13,12 @@ impl Face {
 }
 
 pub struct Triangle {
-    pub points: [Vec2; 3]
+    pub points: [Vec2; 3],
+    pub depth: f32,
 }
 
 impl Triangle {
-    pub fn new(a: Vec2, b: Vec2, c: Vec2) -> Self {
-        Self { points: [a, b, c] }
+    pub fn new(a: Vec2, b: Vec2, c: Vec2, depth: f32) -> Self {
+        Self { points: [a, b, c], depth }
     }
 }

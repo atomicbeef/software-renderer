@@ -69,44 +69,44 @@ impl ColorBuffer {
         );
     }
 
-    fn draw_flat_bottom_triangle(&mut self, triangle: &Triangle, color: u32) {
-        let slope_left = (triangle.points[1].x - triangle.points[0].x) / (triangle.points[1].y - triangle.points[0].y);
-        let slope_right = (triangle.points[2].x - triangle.points[0].x) / (triangle.points[2].y - triangle.points[0].y);
+    fn draw_flat_bottom_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: u32) {
+        let slope_left = (b.x - a.x) / (b.y - a.y);
+        let slope_right = (c.x - a.x) / (c.y - a.y);
 
-        let mut start_x = triangle.points[0].x;
-        let mut end_x = triangle.points[0].x;
+        let mut start_x = a.x;
+        let mut end_x = a.x;
 
-        for y in triangle.points[0].y as usize..triangle.points[2].y as usize + 1 {
+        for y in a.y as usize..c.y as usize + 1 {
             self.draw_line(start_x as usize, y, end_x as usize, y, color);
 
             start_x += slope_left;
             end_x += slope_right;
 
             // Prevent wide, short triangles from being drawn too wide
-            if (end_x - start_x).abs() > (triangle.points[2].x - triangle.points[1].x).abs() {
-                start_x = triangle.points[1].x;
-                end_x = triangle.points[2].x;
+            if (end_x - start_x).abs() > (c.x - b.x).abs() {
+                start_x = b.x;
+                end_x = c.x;
             }
         }
     }
 
-    fn draw_flat_top_triangle(&mut self, triangle: &Triangle, color: u32) {
-        let slope_left = (triangle.points[0].x - triangle.points[2].x) / (triangle.points[0].y - triangle.points[2].y);
-        let slope_right = (triangle.points[1].x - triangle.points[2].x) / (triangle.points[1].y - triangle.points[2].y);
+    fn draw_flat_top_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: u32) {
+        let slope_left = (a.x - c.x) / (a.y - c.y);
+        let slope_right = (b.x - c.x) / (b.y - c.y);
 
-        let mut start_x = triangle.points[2].x;
-        let mut end_x = triangle.points[2].x;
+        let mut start_x = c.x;
+        let mut end_x = c.x;
 
-        for y in (triangle.points[0].y as usize..triangle.points[2].y as usize + 1).rev() {
+        for y in (a.y as usize..c.y as usize + 1).rev() {
             self.draw_line(start_x as usize, y, end_x as usize, y, color);
 
             start_x -= slope_left;
             end_x -= slope_right;
             
             // Prevent wide, short triangles from being drawn too wide
-            if (end_x - start_x).abs() > (triangle.points[1].x - triangle.points[0].x).abs() {
-                start_x = triangle.points[0].x;
-                end_x = triangle.points[1].x;
+            if (end_x - start_x).abs() > (b.x - a.x).abs() {
+                start_x = a.x;
+                end_x = b.x;
             }
         }
     }
@@ -116,20 +116,17 @@ impl ColorBuffer {
         points.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
 
         if points[1].y == points[2].y {
-            self.draw_flat_bottom_triangle(triangle, color);
+            self.draw_flat_bottom_triangle(triangle.points[0], triangle.points[1], triangle.points[2], color);
         } else if points[0].y == points[1].y {
-            self.draw_flat_top_triangle(triangle, color);
+            self.draw_flat_top_triangle(triangle.points[0], triangle.points[1], triangle.points[2], color);
         } else {
             let midpoint = Vec2::new(
                 (points[2].x - points[0].x) * (points[1].y - points[0].y) / (points[2].y - points[0].y) + points[0].x,
                 points[1].y
             );
     
-            let flat_bottom_triangle = Triangle::new(points[0], points[1], midpoint);
-            self.draw_flat_bottom_triangle(&flat_bottom_triangle, color);
-    
-            let flat_top_triangle = Triangle::new(points[1], midpoint, points[2]);
-            self.draw_flat_top_triangle(&flat_top_triangle, color);
+            self.draw_flat_bottom_triangle(points[0], points[1], midpoint, color);
+            self.draw_flat_top_triangle(points[1], midpoint, points[2], color);
         }
     }
 }

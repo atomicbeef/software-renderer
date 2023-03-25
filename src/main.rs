@@ -57,8 +57,6 @@ fn update(
             mesh.vertices[face.c as usize]
         ];
 
-        let mut triangle = Triangle::new(Vec2::default(), Vec2::default(), Vec2::default());
-
         // Transform
         let mut transformed_vertices: [Vec3; 3] = [Vec3::default(); 3];
         for (i, vertex) in face_vertices.iter().enumerate() {
@@ -85,7 +83,14 @@ fn update(
                 continue;
             }
         }
-        
+
+        let mut triangle = Triangle::new(
+            Vec2::default(),
+            Vec2::default(),
+            Vec2::default(),
+            (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0
+        );
+
         // Project
         for (i, transformed_vertex) in transformed_vertices.iter().enumerate() {
             let mut projected_vertex = project_point(transformed_vertex, fov_factor);
@@ -98,6 +103,9 @@ fn update(
 
         triangles_to_render.push(triangle);
     }
+
+    // Sort triangles by depth
+    triangles_to_render.sort_by(|a, b| { a.depth.partial_cmp(&b.depth).unwrap() });
 }
 
 fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[Triangle], settings: RenderSettings) {
