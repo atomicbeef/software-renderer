@@ -64,6 +64,13 @@ impl Vec2 {
     pub fn dot(&self, b: &Self) -> f32 {
         self.x * b.x + self.y * b.y
     }
+
+    pub fn normalize(&mut self) {
+        let magnitude = self.magnitude();
+        
+        self.x /= magnitude;
+        self.y /= magnitude;
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -162,5 +169,13 @@ impl Vec3 {
             y: self.x * angle.sin() + self.y * angle.cos(),
             z: self.z
         }
+    }
+
+    pub fn normalize(&mut self) {
+        let magnitude = self.magnitude();
+
+        self.x /= magnitude;
+        self.y /= magnitude;
+        self.z /= magnitude;
     }
 }

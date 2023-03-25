@@ -59,7 +59,9 @@ fn update(
         // Backface cull
         let ab = transformed_vertices[1] - transformed_vertices[0];
         let ac = transformed_vertices[2] - transformed_vertices[0];
-        let normal = ab.cross(&ac);
+        
+        let mut normal = ab.cross(&ac);
+        normal.normalize();
         
         let camera_ray = *camera_position - transformed_vertices[0];
 
@@ -93,13 +95,14 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &V
             buffer.draw_rect(
                 point.x as usize,
                 point.y as usize,
-                4,
-                4,
+                2,
+                2,
                 0x0000FF00
             );
         }
 
-        buffer.draw_triangle(triangle, 0x0000FFFF);
+        buffer.draw_triangle(triangle, 0x00FF0000);
+        buffer.draw_filled_triangle(triangle, 0x0000FFFF);
     }
 
     window.update_with_buffer(buffer.buffer(), buffer.width(), buffer.height())
@@ -124,8 +127,7 @@ fn main() -> ExitCode {
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
         WindowOptions::default()
-    )
-    .expect("Error: Window could not be created!");
+    ).expect("Error: Window could not be created!");
 
     let mesh_path = Path::new(&args[1]);
     let mut mesh = Mesh::from_obj(mesh_path);
