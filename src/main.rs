@@ -83,7 +83,7 @@ fn update(
     }
 }
 
-fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &Vec<Triangle>) {
+fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[Triangle]) {
     buffer.draw_grid();
 
     for triangle in triangles_to_render.iter() {
