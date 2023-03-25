@@ -115,15 +115,21 @@ impl ColorBuffer {
         let mut points = triangle.points.clone();
         points.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
 
-        let midpoint = Vec2::new(
-            (points[2].x - points[0].x) * (points[1].y - points[0].y) / (points[2].y - points[0].y) + points[0].x,
-            points[1].y
-        );
-
-        let flat_bottom_triangle = Triangle::new(points[0], points[1], midpoint);
-        self.draw_flat_bottom_triangle(&flat_bottom_triangle, color);
-
-        let flat_top_triangle = Triangle::new(points[1], midpoint, points[2]);
-        self.draw_flat_top_triangle(&flat_top_triangle, color);
+        if points[1].y == points[2].y {
+            self.draw_flat_bottom_triangle(triangle, color);
+        } else if points[0].y == points[1].y {
+            self.draw_flat_top_triangle(triangle, color);
+        } else {
+            let midpoint = Vec2::new(
+                (points[2].x - points[0].x) * (points[1].y - points[0].y) / (points[2].y - points[0].y) + points[0].x,
+                points[1].y
+            );
+    
+            let flat_bottom_triangle = Triangle::new(points[0], points[1], midpoint);
+            self.draw_flat_bottom_triangle(&flat_bottom_triangle, color);
+    
+            let flat_top_triangle = Triangle::new(points[1], midpoint, points[2]);
+            self.draw_flat_top_triangle(&flat_top_triangle, color);
+        }
     }
 }
