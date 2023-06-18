@@ -70,6 +70,12 @@ impl Mesh {
             }
         }
 
-        Self { vertices: vertices, faces: faces, rotation: Vec3::new(0.0, 0.0, 0.0) }
+        Self {
+            vertices: vertices,
+            faces: faces,
+            rotation: Vec3::default(),
+            scale: Vec3::splat(1.0),
+            translation: Vec3::default()
+        }
     }
 }

@@ -2,10 +2,12 @@ use std::env;
 use std::path::Path;
 use std::process::ExitCode;
 
+use matrix::Mat4;
 use minifb::{Key, Window, WindowOptions};
 
 mod color_buffer;
 mod drawing;
+mod matrix;
 mod mesh;
 mod obj;
 mod triangle;
@@ -14,7 +16,7 @@ mod vector;
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
 use triangle::Triangle;
-use vector::{Vec2, Vec3};
+use vector::{Vec2, Vec3, Vec4};
 
 const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 768;
@@ -33,22 +35,34 @@ struct RenderSettings {
     backface_cull: bool,
 }
 
-fn project_point(point3d: &Vec3, fov_factor: f32) -> Vec2 {
+fn project_point(point3d: Vec3, fov_factor: f32) -> Vec2 {
     Vec2::new(point3d.x * fov_factor / point3d.z, point3d.y * fov_factor / point3d.z)
 }
 
 fn update(
     triangles_to_render: &mut Vec<Triangle>,
     fov_factor: f32,
-    camera_position: &Vec3,
+    camera_position: Vec3,
     mesh: &mut Mesh,
     settings: RenderSettings,
 ) {
     triangles_to_render.clear();
 
+    // Animate mesh
     mesh.rotation.x += 0.01;
     mesh.rotation.y += 0.01;
     mesh.rotation.z += 0.01;
+    mesh.scale.x += 0.002;
+    mesh.translation.x += 0.01;
+    mesh.translation.z = 5.0;
+
+    let scale_matrix = Mat4::new_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+    let translation_matrix = Mat4::new_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+    let rotation_x_matrix = Mat4::new_rotation_x(mesh.rotation.x);
+    let rotation_y_matrix = Mat4::new_rotation_y(mesh.rotation.y);
+    let rotation_z_matrix = Mat4::new_rotation_z(mesh.rotation.z);
+
+    let world_matrix = scale_matrix * rotation_x_matrix * rotation_y_matrix * rotation_z_matrix * translation_matrix;
 
     for face in mesh.faces.iter() {
         let face_vertices = [
@@ -58,16 +72,7 @@ fn update(
         ];
 
         // Transform
-        let mut transformed_vertices: [Vec3; 3] = [Vec3::default(); 3];
-        for (i, vertex) in face_vertices.iter().enumerate() {
-            let transformed_vertex = vertex.rotated_x(mesh.rotation.x);
-            let transformed_vertex = transformed_vertex.rotated_y(mesh.rotation.y);
-            let mut transformed_vertex = transformed_vertex.rotated_z(mesh.rotation.z);
-
-            transformed_vertex.z += 5.0;
-
-            transformed_vertices[i] = transformed_vertex;
-        }
+        let transformed_vertices = face_vertices.map(|vertex| Vec3::from(world_matrix * Vec4::from(vertex)));
 
         if settings.backface_cull {
             // Backface cull
@@ -77,7 +82,7 @@ fn update(
             let mut normal = ab.cross(&ac);
             normal.normalize();
 
-            let camera_ray = *camera_position - transformed_vertices[0];
+            let camera_ray = camera_position - transformed_vertices[0];
 
             if normal.dot(&camera_ray) < 0.0 {
                 continue;
@@ -92,7 +97,7 @@ fn update(
         );
 
         // Project
-        for (i, transformed_vertex) in transformed_vertices.iter().enumerate() {
+        for (i, transformed_vertex) in transformed_vertices.into_iter().enumerate() {
             let mut projected_vertex = project_point(transformed_vertex, fov_factor);
 
             projected_vertex.x += (WINDOW_WIDTH / 2) as f32;
@@ -196,7 +201,7 @@ fn main() -> ExitCode {
             render_settings.backface_cull = false;
         }
 
-        update(&mut triangles_to_render, fov_factor, &camera_position, &mut mesh, render_settings);
+        update(&mut triangles_to_render, fov_factor, camera_position, &mut mesh, render_settings);
         render(&mut buffer, &mut window, &triangles_to_render, render_settings);
     }
 

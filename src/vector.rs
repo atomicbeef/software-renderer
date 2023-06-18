@@ -53,8 +53,12 @@ impl Div<f32> for Vec2 {
 }
 
 impl Vec2 {
-    pub fn new(x: f32, y: f32) -> Self { 
+    pub const fn new(x: f32, y: f32) -> Self { 
         Self { x, y }
+    }
+
+    pub const fn splat(val: f32) -> Self {
+        Self { x: val, y: val }
     }
 
     pub fn magnitude(&self) -> f32 {
@@ -126,9 +130,23 @@ impl Div<f32> for Vec3 {
     }
 }
 
+impl From<Vec4> for Vec3 {
+    fn from(value: Vec4) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+            z: value.z
+        }
+    }
+}
+
 impl Vec3 {
     pub const fn new(x: f32, y: f32, z: f32) -> Self { 
         Self { x, y, z }
+    }
+
+    pub const fn splat(val: f32) -> Self {
+        Self { x: val, y: val, z: val }
     }
 
     pub fn magnitude(&self) -> f32 {
@@ -177,5 +195,60 @@ impl Vec3 {
         self.x /= magnitude;
         self.y /= magnitude;
         self.z /= magnitude;
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Vec4 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32
+}
+
+impl Vec4 {
+    pub const fn new(x: f32, y: f32, z: f32, w: f32) -> Self { 
+        Self { x, y, z, w }
+    }
+
+    pub const fn splat(val: f32) -> Self {
+        Self { x: val, y: val, z: val, w: val }
+    }
+
+    pub fn magnitude(&self) -> f32 {
+        f32::sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w)
+    }
+
+    pub fn dot(&self, b: Self) -> f32 {
+        self.x * b.x + self.y * b.y + self.z * b.z + self.w * b.w
+    }
+
+    pub fn normalize(&mut self) {
+        let magnitude = self.magnitude();
+
+        self.x /= magnitude;
+        self.y /= magnitude;
+        self.z /= magnitude;
+        self.w /= magnitude;
+    }
+}
+
+impl From<Vec3> for Vec4 {
+    fn from(value: Vec3) -> Self {
+        Self::new(value.x, value.y, value.z, 1.0)
+    }
+}
+
+impl Default for Vec4 {
+    fn default() -> Self {
+        Vec4 { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }
+    }
+}
+
+impl Add<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn add(self, rhs: Vec4) -> Self::Output {
+        Vec4::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z, self.w + rhs.w)
     }
 }
