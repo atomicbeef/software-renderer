@@ -77,6 +77,12 @@ impl Vec2 {
     }
 }
 
+impl From<Vec4> for Vec2 {
+    fn from(vector: Vec4) -> Self {
+        Self::new(vector.x, vector.y)
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f32,

@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, time::Instant};
 use std::path::Path;
 use std::process::ExitCode;
 
@@ -35,34 +35,31 @@ struct RenderSettings {
     backface_cull: bool,
 }
 
-fn project_point(point3d: Vec3, fov_factor: f32) -> Vec2 {
-    Vec2::new(point3d.x * fov_factor / point3d.z, point3d.y * fov_factor / point3d.z)
-}
-
 fn update(
     triangles_to_render: &mut Vec<Triangle>,
-    fov_factor: f32,
+    projection_matrix: Mat4,
     camera_position: Vec3,
     mesh: &mut Mesh,
     settings: RenderSettings,
+    elapsed_time: f32,
 ) {
     triangles_to_render.clear();
 
     // Animate mesh
-    mesh.rotation.x += 0.01;
+    mesh.rotation.x += 0.005;
     mesh.rotation.y += 0.01;
     mesh.rotation.z += 0.01;
-    mesh.scale.x += 0.002;
-    mesh.translation.x += 0.01;
+    mesh.translation.x = 2.0 * elapsed_time.sin();
+    mesh.translation.y = 2.0 * elapsed_time.cos();
     mesh.translation.z = 5.0;
 
-    let scale_matrix = Mat4::new_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-    let translation_matrix = Mat4::new_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
-    let rotation_x_matrix = Mat4::new_rotation_x(mesh.rotation.x);
-    let rotation_y_matrix = Mat4::new_rotation_y(mesh.rotation.y);
-    let rotation_z_matrix = Mat4::new_rotation_z(mesh.rotation.z);
+    let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+    let translation_matrix = Mat4::translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+    let rotation_x_matrix = Mat4::rotation_x(mesh.rotation.x);
+    let rotation_y_matrix = Mat4::rotation_y(mesh.rotation.y);
+    let rotation_z_matrix = Mat4::rotation_z(mesh.rotation.z);
 
-    let world_matrix = scale_matrix * rotation_x_matrix * rotation_y_matrix * rotation_z_matrix * translation_matrix;
+    let world_matrix = translation_matrix * rotation_x_matrix * rotation_y_matrix * rotation_z_matrix * scale_matrix;
 
     for face in mesh.faces.iter() {
         let face_vertices = [
@@ -72,39 +69,43 @@ fn update(
         ];
 
         // Transform
-        let transformed_vertices = face_vertices.map(|vertex| Vec3::from(world_matrix * Vec4::from(vertex)));
+        let transformed_vertices = face_vertices.map(|vertex| world_matrix * Vec4::from(vertex));
 
         if settings.backface_cull {
             // Backface cull
-            let ab = transformed_vertices[1] - transformed_vertices[0];
-            let ac = transformed_vertices[2] - transformed_vertices[0];
+            let ab = Vec3::from(transformed_vertices[1]) - Vec3::from(transformed_vertices[0]);
+            let ac = Vec3::from(transformed_vertices[2]) - Vec3::from(transformed_vertices[0]);
 
             let mut normal = ab.cross(&ac);
             normal.normalize();
 
-            let camera_ray = camera_position - transformed_vertices[0];
+            let camera_ray = camera_position - Vec3::from(transformed_vertices[0]);
 
             if normal.dot(&camera_ray) < 0.0 {
                 continue;
             }
         }
 
-        let mut triangle = Triangle::new(
-            Vec2::default(),
-            Vec2::default(),
-            Vec2::default(),
+        // Project
+        let projected_vertices = transformed_vertices.map(|vertex| {
+            let mut projected = Vec2::from(projection_matrix.project_vec4(vertex));
+            
+            // Scale and translate into view
+            projected.x *= WINDOW_WIDTH as f32 / 2.0;
+            projected.y *= WINDOW_HEIGHT as f32 / 2.0;
+
+            projected.x += WINDOW_WIDTH as f32 / 2.0;
+            projected.y += WINDOW_HEIGHT as f32 / 2.0;
+            
+            projected
+        });
+
+        let triangle = Triangle::new(
+            projected_vertices[0],
+            projected_vertices[1],
+            projected_vertices[2],
             (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0
         );
-
-        // Project
-        for (i, transformed_vertex) in transformed_vertices.into_iter().enumerate() {
-            let mut projected_vertex = project_point(transformed_vertex, fov_factor);
-
-            projected_vertex.x += (WINDOW_WIDTH / 2) as f32;
-            projected_vertex.y += (WINDOW_HEIGHT / 2) as f32;
-
-            triangle.points[i] = projected_vertex;
-        }
 
         triangles_to_render.push(triangle);
     }
@@ -175,14 +176,22 @@ fn main() -> ExitCode {
     let mut mesh = Mesh::from_obj(mesh_path);
 
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
-    let fov_factor = 650f32;
     
     let camera_position = Vec3::new(0.0, 0.0, 0.0);
+
+    let projection_matrix = Mat4::projection(
+        std::f32::consts::FRAC_PI_3,
+        WINDOW_HEIGHT as f32 / WINDOW_WIDTH as f32,
+        0.1,
+        100.0
+    );
 
     let mut render_settings = RenderSettings {
         render_mode: RenderMode::WireframeFilled,
         backface_cull: true
     };
+
+    let start_time = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_down(Key::Key1) {
@@ -201,7 +210,14 @@ fn main() -> ExitCode {
             render_settings.backface_cull = false;
         }
 
-        update(&mut triangles_to_render, fov_factor, camera_position, &mut mesh, render_settings);
+        update(
+            &mut triangles_to_render,
+            projection_matrix,
+            camera_position,
+            &mut mesh,
+            render_settings,
+            start_time.elapsed().as_secs_f32(),
+        );
         render(&mut buffer, &mut window, &triangles_to_render, render_settings);
     }
 
