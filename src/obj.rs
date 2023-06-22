@@ -2,6 +2,7 @@ use std::io::{BufReader, BufRead};
 use std::path::Path;
 use std::fs::File;
 
+use crate::color::Color;
 use crate::mesh::Mesh;
 use crate::triangle::Face;
 use crate::vector::Vec3;
@@ -48,7 +49,7 @@ fn read_face(line: &String, num_vertices: u16) -> Result<Face, FileFormatError> 
         return Err(FileFormatError);
     }
 
-    Ok(Face::new(vertex_indices[0], vertex_indices[1], vertex_indices[2]))
+    Ok(Face::new(vertex_indices[0], vertex_indices[1], vertex_indices[2], Color::new(0, 0xFF, 0xFF)))
 }
 
 impl Mesh {
@@ -71,8 +72,8 @@ impl Mesh {
         }
 
         Self {
-            vertices: vertices,
-            faces: faces,
+            vertices,
+            faces,
             rotation: Vec3::default(),
             scale: Vec3::splat(1.0),
             translation: Vec3::default()

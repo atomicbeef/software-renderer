@@ -49,10 +49,10 @@ fn update(
 
     // Animate mesh
     mesh.rotation.x += 0.005;
-    mesh.rotation.y += 0.01;
-    mesh.rotation.z += 0.01;
-    mesh.translation.x = 2.0 * elapsed_time.sin();
-    mesh.translation.y = 2.0 * elapsed_time.cos();
+    //mesh.rotation.y += 0.01;
+    //mesh.rotation.z += 0.01;
+    //mesh.translation.x = 2.0 * elapsed_time.sin();
+    //mesh.translation.y = 2.0 * elapsed_time.cos();
     mesh.translation.z = 5.0;
 
     let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -73,14 +73,13 @@ fn update(
         // Transform
         let transformed_vertices = face_vertices.map(|vertex| world_matrix * Vec4::from(vertex));
 
+        // Calculate face normal for backface culling and lighting
+        let ab = Vec3::from(transformed_vertices[1]) - Vec3::from(transformed_vertices[0]);
+        let ac = Vec3::from(transformed_vertices[2]) - Vec3::from(transformed_vertices[0]);
+        let mut normal = ab.cross(&ac);
+        normal.normalize();
+
         if settings.backface_cull {
-            // Backface cull
-            let ab = Vec3::from(transformed_vertices[1]) - Vec3::from(transformed_vertices[0]);
-            let ac = Vec3::from(transformed_vertices[2]) - Vec3::from(transformed_vertices[0]);
-
-            let mut normal = ab.cross(&ac);
-            normal.normalize();
-
             let camera_ray = camera_position - Vec3::from(transformed_vertices[0]);
 
             if normal.dot(&camera_ray) < 0.0 {
@@ -88,13 +87,18 @@ fn update(
             }
         }
 
+        // Lighting
+        let mut light_direction = Vec3::new(0.0, 0.0, 1.0);
+        light_direction.normalize();
+        let percent_lit = normal.dot(&light_direction) * -0.5 + 0.5;
+
         // Project
         let projected_vertices = transformed_vertices.map(|vertex| {
             let mut projected = Vec2::from(projection_matrix.project_vec4(vertex));
             
             // Scale and translate into view
-            projected.x *= WINDOW_WIDTH as f32 / 2.0;
-            projected.y *= WINDOW_HEIGHT as f32 / 2.0;
+            projected.x *= WINDOW_WIDTH as f32 / 1.0;
+            projected.y *= WINDOW_HEIGHT as f32 / 1.0;
 
             projected.x += WINDOW_WIDTH as f32 / 2.0;
             projected.y += WINDOW_HEIGHT as f32 / 2.0;
@@ -106,7 +110,8 @@ fn update(
             projected_vertices[0],
             projected_vertices[1],
             projected_vertices[2],
-            (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0
+            (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0,
+            face.color * percent_lit
         );
 
         triangles_to_render.push(triangle);
@@ -141,11 +146,11 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[
                 buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
             },
             RenderMode::Filled => {
-                buffer.draw_filled_triangle(triangle, Color::new(0, 0xFF, 0xFF));
+                buffer.draw_filled_triangle(triangle, triangle.color);
             },
             RenderMode::WireframeFilled => {
                 buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                buffer.draw_filled_triangle(triangle, Color::new(0, 0xFF, 0xFF));
+                buffer.draw_filled_triangle(triangle, triangle.color);
             }
         };
     }
