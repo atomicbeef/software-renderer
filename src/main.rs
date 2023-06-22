@@ -35,6 +35,7 @@ enum RenderMode {
 struct RenderSettings {
     render_mode: RenderMode,
     backface_cull: bool,
+    shaded: bool,
 }
 
 fn update(
@@ -91,6 +92,7 @@ fn update(
         let mut light_direction = Vec3::new(0.0, 0.0, 1.0);
         light_direction.normalize();
         let percent_lit = normal.dot(&light_direction) * -0.5 + 0.5;
+        let triangle_color = if settings.shaded { face.color * percent_lit } else { face.color };
 
         // Project
         let projected_vertices = transformed_vertices.map(|vertex| {
@@ -98,7 +100,7 @@ fn update(
             
             // Scale and translate into view
             projected.x *= WINDOW_WIDTH as f32 / 1.0;
-            projected.y *= WINDOW_HEIGHT as f32 / 1.0;
+            projected.y *= WINDOW_HEIGHT as f32 / -1.0;
 
             projected.x += WINDOW_WIDTH as f32 / 2.0;
             projected.y += WINDOW_HEIGHT as f32 / 2.0;
@@ -111,7 +113,7 @@ fn update(
             projected_vertices[1],
             projected_vertices[2],
             (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0,
-            face.color * percent_lit
+            triangle_color
         );
 
         triangles_to_render.push(triangle);
@@ -195,7 +197,8 @@ fn main() -> ExitCode {
 
     let mut render_settings = RenderSettings {
         render_mode: RenderMode::WireframeFilled,
-        backface_cull: true
+        backface_cull: true,
+        shaded: true,
     };
 
     let start_time = Instant::now();
@@ -215,6 +218,12 @@ fn main() -> ExitCode {
             render_settings.backface_cull = true;
         } else if window.is_key_down(Key::D) {
             render_settings.backface_cull = false;
+        }
+
+        if window.is_key_down(Key::L) {
+            render_settings.shaded = true;
+        } else if window.is_key_down(Key::U) {
+            render_settings.shaded = false;
         }
 
         update(
