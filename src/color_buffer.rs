@@ -1,3 +1,5 @@
+use crate::color::Color;
+
 pub struct ColorBuffer {
     buffer: Vec<u32>,
     width: usize,
@@ -19,13 +21,13 @@ impl ColorBuffer {
 
     pub fn buffer(&self) -> &[u32] { &self.buffer }
 
-    pub fn clear(&mut self, color: u32) {
-        for c in self.buffer.iter_mut() { *c = color; }
+    pub fn clear(&mut self, color: Color) {
+        for c in self.buffer.iter_mut() { *c = color.into(); }
     }
 
-    pub fn set(&mut self, x: usize, y: usize, color: u32) {
+    pub fn set(&mut self, x: usize, y: usize, color: Color) {
         if x < self.width && y < self.height {
-            self.buffer[self.width * y + x] = color;
+            self.buffer[self.width * y + x] = color.into();
         }
     }
 }

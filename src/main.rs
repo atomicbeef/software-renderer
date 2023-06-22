@@ -2,9 +2,11 @@ use std::{env, time::Instant};
 use std::path::Path;
 use std::process::ExitCode;
 
+use color::Color;
 use matrix::Mat4;
 use minifb::{Key, Window, WindowOptions};
 
+mod color;
 mod color_buffer;
 mod drawing;
 mod matrix;
@@ -129,21 +131,21 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[
                     point.y as usize,
                     2,
                     2,
-                    0x0000FF00
+                    Color::new(0, 0xFF, 0)
                 );
             }
         }
 
         match settings.render_mode {
             RenderMode::Wireframe | RenderMode::WireframeVertex => {
-                buffer.draw_triangle(triangle, 0x00FF0000);
+                buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
             },
             RenderMode::Filled => {
-                buffer.draw_filled_triangle(triangle, 0x0000FFFF);
+                buffer.draw_filled_triangle(triangle, Color::new(0, 0xFF, 0xFF));
             },
             RenderMode::WireframeFilled => {
-                buffer.draw_triangle(triangle, 0x00FF0000);
-                buffer.draw_filled_triangle(triangle, 0x0000FFFF);
+                buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
+                buffer.draw_filled_triangle(triangle, Color::new(0, 0xFF, 0xFF));
             }
         };
     }
@@ -151,7 +153,7 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[
     window.update_with_buffer(buffer.buffer(), buffer.width(), buffer.height())
         .unwrap();
     
-    buffer.clear(0x00000000);
+    buffer.clear(Color::new(0, 0, 0));
 }
 
 fn main() -> ExitCode {

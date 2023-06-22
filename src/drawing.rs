@@ -1,3 +1,4 @@
+use crate::color::Color;
 use crate::color_buffer::ColorBuffer;
 use crate::triangle::Triangle;
 use crate::Vec2;
@@ -7,13 +8,13 @@ impl ColorBuffer {
         for x in (0..self.width()).step_by(10) {
             for y in (0..self.height()).step_by(10) {
                 if x % 10 == 0 || y % 10 == 0 {
-                    self.set(x, y, 0x00555555);
+                    self.set(x, y, Color::new(0x55, 0x55, 0x55));
                 }
             }
         }
     }
     
-    pub fn draw_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: u32) {
+    pub fn draw_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
         for xi in 0..width {
             for yi in 0..height {
                 self.set(x + xi, y + yi, color);
@@ -21,7 +22,7 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: u32) {
+    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
         let dx = x1 as isize - x0 as isize;
         let dy = y1 as isize - y0 as isize;
 
@@ -40,7 +41,7 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_triangle(&mut self, triangle: &Triangle, color: u32) {
+    pub fn draw_triangle(&mut self, triangle: &Triangle, color: Color) {
         // A -> B
         self.draw_line(
             triangle.points[0].x as usize,
@@ -69,7 +70,7 @@ impl ColorBuffer {
         );
     }
 
-    fn draw_flat_bottom_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: u32) {
+    fn draw_flat_bottom_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: Color) {
         let slope_left = (b.x - a.x) / (b.y - a.y);
         let slope_right = (c.x - a.x) / (c.y - a.y);
 
@@ -90,7 +91,7 @@ impl ColorBuffer {
         }
     }
 
-    fn draw_flat_top_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: u32) {
+    fn draw_flat_top_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: Color) {
         let slope_left = (a.x - c.x) / (a.y - c.y);
         let slope_right = (b.x - c.x) / (b.y - c.y);
 
@@ -111,7 +112,7 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: u32) {
+    pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: Color) {
         let mut points = triangle.points.clone();
         points.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
 
