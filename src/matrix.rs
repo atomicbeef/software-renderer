@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::ops::{Mul, MulAssign};
 
 use crate::vector::Vec4;
 
@@ -156,6 +156,11 @@ impl Mul<Mat4> for Mat4 {
     }
 }
 
+impl MulAssign<Mat4> for Mat4 {
+    fn mul_assign(&mut self, rhs: Mat4) {
+        *self = *self * rhs;
+    }
+}
 
 #[cfg(test)]
 mod tests {
