@@ -69,7 +69,10 @@ fn update(
     
     if settings.translate {
         world_matrix *= translation_matrix;
+    } else {
+        world_matrix *= Mat4::translation(0.0, 0.0, 5.0);
     }
+    
     if settings.rotate {
         world_matrix *= rotation_x_matrix * rotation_y_matrix * rotation_z_matrix;
     }
