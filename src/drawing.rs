@@ -117,9 +117,9 @@ impl ColorBuffer {
         points.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
 
         if points[1].y == points[2].y {
-            self.draw_flat_bottom_triangle(triangle.points[0], triangle.points[1], triangle.points[2], color);
+            self.draw_flat_bottom_triangle(points[0], points[1], points[2], color);
         } else if points[0].y == points[1].y {
-            self.draw_flat_top_triangle(triangle.points[0], triangle.points[1], triangle.points[2], color);
+            self.draw_flat_top_triangle(points[0], points[1], points[2], color);
         } else {
             let midpoint = Vec2::new(
                 (points[2].x - points[0].x) * (points[1].y - points[0].y) / (points[2].y - points[0].y) + points[0].x,
