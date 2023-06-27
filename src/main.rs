@@ -123,7 +123,7 @@ fn update(
     }
 
     // Sort triangles by depth
-    triangles_to_render.sort_by(|a, b| { a.depth.partial_cmp(&b.depth).unwrap() });
+    triangles_to_render.sort_by(|a, b| { b.depth.partial_cmp(&a.depth).unwrap() });
 }
 
 fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[Triangle], settings: RenderSettings) {
