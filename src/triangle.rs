@@ -14,6 +14,7 @@ impl Face {
     }
 }
 
+#[derive(Debug)]
 pub struct Triangle {
     pub points: [Vec2; 3],
     pub depth: f32,

@@ -52,11 +52,11 @@ fn update(
     triangles_to_render.clear();
 
     // Animate mesh
-    mesh.rotation.x += 0.005;
-    mesh.rotation.y += 0.01;
-    mesh.rotation.z += 0.01;
-    mesh.translation.x = 2.0 * elapsed_time.sin();
-    mesh.translation.y = 2.0 * elapsed_time.cos();
+    mesh.rotation.x = if settings.rotate { mesh.rotation.x + 0.005 } else { 0.0 };
+    mesh.rotation.y = if settings.rotate { mesh.rotation.y + 0.01 } else { 0.0 };
+    mesh.rotation.z = if settings.rotate { mesh.rotation.z + 0.01 } else { 0.0 };
+    mesh.translation.x = if settings.translate { 2.0 * elapsed_time.sin() } else { 0.0 };
+    mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
     mesh.translation.z = 5.0;
 
     let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -65,20 +65,7 @@ fn update(
     let rotation_y_matrix = Mat4::rotation_y(mesh.rotation.y);
     let rotation_z_matrix = Mat4::rotation_z(mesh.rotation.z);
 
-    let mut world_matrix = Mat4::IDENTITY;
-    
-    if settings.translate {
-        world_matrix *= translation_matrix;
-    } else {
-        world_matrix *= Mat4::translation(0.0, 0.0, 5.0);
-    }
-    
-    if settings.rotate {
-        world_matrix *= rotation_x_matrix * rotation_y_matrix * rotation_z_matrix;
-    }
-    if settings.scale {
-        world_matrix *= scale_matrix;
-    }
+    let world_matrix = translation_matrix * rotation_x_matrix * rotation_y_matrix * rotation_z_matrix * scale_matrix;
 
     for face in mesh.faces.iter() {
         let face_vertices = [
