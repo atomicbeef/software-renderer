@@ -71,64 +71,68 @@ impl ColorBuffer {
         );
     }
 
-    fn draw_flat_bottom_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: Color) {
-        let slope_left = (b.x - a.x) / (b.y - a.y);
-        let slope_right = (c.x - a.x) / (c.y - a.y);
-
-        let mut start_x = a.x;
-        let mut end_x = a.x;
-
-        for y in a.y as usize..c.y as usize + 1 {
-            self.draw_line(start_x as usize, y, end_x as usize, y, color);
-
-            start_x += slope_left;
-            end_x += slope_right;
-
-            // Prevent wide, short triangles from being drawn too wide
-            if (end_x - start_x).abs() > (c.x - b.x).abs() {
-                start_x = b.x;
-                end_x = c.x;
-            }
-        }
-    }
-
-    fn draw_flat_top_triangle(&mut self, a: Vec2, b: Vec2, c: Vec2, color: Color) {
-        let slope_left = (a.x - c.x) / (a.y - c.y);
-        let slope_right = (b.x - c.x) / (b.y - c.y);
-
-        let mut start_x = c.x;
-        let mut end_x = c.x;
-
-        for y in (a.y as usize..c.y as usize + 1).rev() {
-            self.draw_line(start_x as usize, y, end_x as usize, y, color);
-
-            start_x -= slope_left;
-            end_x -= slope_right;
-            
-            // Prevent wide, short triangles from being drawn too wide
-            if (end_x - start_x).abs() > (b.x - a.x).abs() {
-                start_x = a.x;
-                end_x = b.x;
-            }
-        }
-    }
-
     pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: Color) {
-        let mut points = triangle.points.clone();
-        points.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
+        // Floor vertices positions to prevent rendering artifacts
+        let mut vertices = [
+            triangle.points[0].floor(),
+            triangle.points[1].floor(),
+            triangle.points[2].floor(),
+        ];
 
-        if points[1].y == points[2].y {
-            self.draw_flat_bottom_triangle(points[0], points[1], points[2], color);
-        } else if points[0].y == points[1].y {
-            self.draw_flat_top_triangle(points[0], points[1], points[2], color);
+        vertices.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
+
+        // Render flat bottom triangle
+        let flat_bottom_inverse_slope_1 = if vertices[1].y - vertices[0].y != 0.0 {
+            (vertices[1].x - vertices[0].x) / (vertices[1].y - vertices[0].y).abs()
         } else {
-            let midpoint = Vec2::new(
-                (points[2].x - points[0].x) * (points[1].y - points[0].y) / (points[2].y - points[0].y) + points[0].x,
-                points[1].y
-            );
-    
-            self.draw_flat_bottom_triangle(points[0], points[1], midpoint, color);
-            self.draw_flat_top_triangle(points[1], midpoint, points[2], color);
+            0.0
+        };
+
+        let flat_bottom_inverse_slope_2 = if vertices[2].y - vertices[0].y != 0.0 {
+            (vertices[2].x - vertices[0].x) / (vertices[2].y - vertices[0].y).abs()
+        } else {
+            0.0
+        };
+
+        if vertices[1].y - vertices[0].y != 0.0 {
+            for y in vertices[0].y as usize..=vertices[1].y as usize {
+                let x0 = vertices[1].x + (y as f32 - vertices[1].y) * flat_bottom_inverse_slope_1;
+                let x1 = vertices[0].x + (y as f32 - vertices[0].y) * flat_bottom_inverse_slope_2;
+
+                let x_start = if x0 < x1 { x0 } else { x1 };
+                let x_end = if x1 > x0 { x1 } else { x0 };
+
+                for x in x_start as usize..=x_end as usize {
+                    self.set(x, y, color);
+                }
+            }
+        }
+        
+        // Render flat top triangle
+        let flat_top_inverse_slope_1 = if vertices[2].y - vertices[1].y != 0.0 {
+            (vertices[2].x - vertices[1].x) / (vertices[2].y - vertices[1].y).abs()
+        } else {
+            0.0
+        };
+
+        let flat_top_inverse_slope_2 = if vertices[2].y - vertices[0].y != 0.0 {
+            (vertices[2].x - vertices[0].x) / (vertices[2].y - vertices[0].y).abs()
+        } else {
+            0.0
+        };
+
+        if vertices[2].y - vertices[1].y != 0.0 {
+            for y in vertices[1].y as usize..=vertices[2].y as usize {
+                let x0 = vertices[1].x + (y as f32 - vertices[1].y) * flat_top_inverse_slope_1;
+                let x1 = vertices[0].x + (y as f32 - vertices[0].y) * flat_top_inverse_slope_2;
+
+                let x_start = if x0 < x1 { x0 as usize } else { x1 as usize };
+                let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
+
+                for x in x_start..=x_end {
+                    self.set(x, y, color);
+                }
+            }
         }
     }
 
