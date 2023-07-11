@@ -12,11 +12,13 @@ mod drawing;
 mod matrix;
 mod mesh;
 mod obj;
+mod texture;
 mod triangle;
 mod vector;
 
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
+use texture::Texture;
 use triangle::Triangle;
 use vector::{Vec2, Vec3, Vec4};
 
@@ -29,6 +31,8 @@ enum RenderMode {
     WireframeVertex,
     WireframeFilled,
     Filled,
+    WireframeTextured,
+    Textured,
 }
 
 #[derive(Clone, Copy)]
@@ -52,9 +56,9 @@ fn update(
     triangles_to_render.clear();
 
     // Animate mesh
-    mesh.rotation.x = if settings.rotate { mesh.rotation.x + 0.005 } else { 0.0 };
-    mesh.rotation.y = if settings.rotate { mesh.rotation.y + 0.01 } else { 0.0 };
-    mesh.rotation.z = if settings.rotate { mesh.rotation.z + 0.01 } else { 0.0 };
+    mesh.rotation.x = if settings.rotate { mesh.rotation.x + 0.005 } else { mesh.rotation.x };
+    mesh.rotation.y = if settings.rotate { mesh.rotation.y + 0.01 } else { mesh.rotation.y };
+    mesh.rotation.z = if settings.rotate { mesh.rotation.z + 0.01 } else { mesh.rotation.z };
     mesh.translation.x = if settings.translate { 2.0 * elapsed_time.sin() } else { 0.0 };
     mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
     mesh.translation.z = 5.0;
@@ -115,6 +119,9 @@ fn update(
             projected_vertices[0],
             projected_vertices[1],
             projected_vertices[2],
+            face.a_uv,
+            face.b_uv,
+            face.c_uv,
             (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0,
             triangle_color
         );
@@ -126,7 +133,13 @@ fn update(
     triangles_to_render.sort_by(|a, b| { b.depth.partial_cmp(&a.depth).unwrap() });
 }
 
-fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[Triangle], settings: RenderSettings) {
+fn render(
+    buffer: &mut ColorBuffer,
+    window: &mut Window,
+    triangles_to_render: &[Triangle],
+    settings: RenderSettings,
+    texture: &Texture,
+) {
     buffer.draw_grid();
 
     for triangle in triangles_to_render.iter() {
@@ -156,6 +169,13 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[
             RenderMode::WireframeFilled => {
                 buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
                 buffer.draw_filled_triangle(triangle, triangle.color);
+            },
+            RenderMode::Textured => {
+                buffer.draw_textured_triangle(triangle, &texture)
+            },
+            RenderMode::WireframeTextured => {
+                buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
+                buffer.draw_textured_triangle(triangle, &texture);
             }
         };
     }
@@ -169,9 +189,9 @@ fn render(buffer: &mut ColorBuffer, window: &mut Window, triangles_to_render: &[
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 2 {
+    if args.len() > 2 {
         eprintln!("Error: Incorrect arguments specified!");
-        println!("Usage: software-renderer <mesh>");
+        println!("Usage: software-renderer [mesh]");
         return ExitCode::from(1);
     }
 
@@ -184,8 +204,12 @@ fn main() -> ExitCode {
         WindowOptions::default()
     ).expect("Error: Window could not be created!");
 
-    let mesh_path = Path::new(&args[1]);
-    let mut mesh = Mesh::from_obj(mesh_path);
+    let mut mesh = if args.len() == 1 {
+        Mesh::cube(1.0)
+    } else {
+        let mesh_path = Path::new(&args[1]);
+        Mesh::from_obj(mesh_path)
+    };
 
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
     
@@ -207,6 +231,13 @@ fn main() -> ExitCode {
         scale: true,
     };
 
+    let debug_texture = Texture::grid(
+        64,
+        64,
+        Color::new(0xFF, 0, 0),
+        Color::new(0xFF, 0xFF, 0xFF)
+    );
+
     let start_time = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
@@ -218,6 +249,10 @@ fn main() -> ExitCode {
             render_settings.render_mode = RenderMode::Filled;
         } else if window.is_key_down(Key::Key4) {
             render_settings.render_mode = RenderMode::WireframeFilled;
+        } else if window.is_key_down(Key::Key5) {
+            render_settings.render_mode = RenderMode::Textured;
+        } else if window.is_key_down(Key::Key6) {
+            render_settings.render_mode = RenderMode::WireframeTextured;
         }
 
         if window.is_key_down(Key::C) {
@@ -250,7 +285,7 @@ fn main() -> ExitCode {
             render_settings,
             start_time.elapsed().as_secs_f32(),
         );
-        render(&mut buffer, &mut window, &triangles_to_render, render_settings);
+        render(&mut buffer, &mut window, &triangles_to_render, render_settings, &debug_texture);
     }
 
     return ExitCode::from(0);

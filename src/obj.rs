@@ -4,6 +4,7 @@ use std::fs::File;
 
 use crate::color::Color;
 use crate::mesh::Mesh;
+use crate::texture::Tex2;
 use crate::triangle::Face;
 use crate::vector::Vec3;
 
@@ -49,7 +50,15 @@ fn read_face(line: &String, num_vertices: u16) -> Result<Face, FileFormatError> 
         return Err(FileFormatError);
     }
 
-    Ok(Face::new(vertex_indices[0], vertex_indices[1], vertex_indices[2], Color::new(0, 0xFF, 0xFF)))
+    Ok(Face::new(
+        vertex_indices[0],
+        vertex_indices[1],
+        vertex_indices[2],
+        Tex2::new(0.0, 0.0),
+        Tex2::new(1.0, 0.0),
+        Tex2::new(0.0, 1.0),
+        Color::new(0, 0xFF, 0xFF)
+    ))
 }
 
 impl Mesh {

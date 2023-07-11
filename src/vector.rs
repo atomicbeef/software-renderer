@@ -57,6 +57,10 @@ impl Vec2 {
         Self { x, y }
     }
 
+    pub fn floor(&self) -> Self {
+        Self { x: self.x.floor(), y: self.y.floor() }
+    }
+
     pub const fn splat(val: f32) -> Self {
         Self { x: val, y: val }
     }

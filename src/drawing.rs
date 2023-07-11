@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::color_buffer::ColorBuffer;
+use crate::texture::{Texture, Tex2};
 use crate::triangle::Triangle;
 use crate::Vec2;
 
@@ -128,6 +129,77 @@ impl ColorBuffer {
     
             self.draw_flat_bottom_triangle(points[0], points[1], midpoint, color);
             self.draw_flat_top_triangle(points[1], midpoint, points[2], color);
+        }
+    }
+
+    pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture) {
+        #[derive(Debug)]
+        struct Vertex {
+            pos: Vec2,
+            uv: Tex2,
+        }
+
+        // Floor vertices positions to prevent rendering artifacts
+        let mut vertices = [
+            Vertex { pos: triangle.points[0].floor(), uv: triangle.tex_coords[0] },
+            Vertex { pos: triangle.points[1].floor(), uv: triangle.tex_coords[1] },
+            Vertex { pos: triangle.points[2].floor(), uv: triangle.tex_coords[2] },
+        ];
+
+        vertices.sort_by(|a, b| a.pos.y.partial_cmp(&b.pos.y).unwrap());
+
+        // Render flat bottom triangle
+        let flat_bottom_inverse_slope_1 = if vertices[1].pos.y - vertices[0].pos.y != 0.0 {
+            (vertices[1].pos.x - vertices[0].pos.x) / (vertices[1].pos.y - vertices[0].pos.y).abs()
+        } else {
+            0.0
+        };
+
+        let flat_bottom_inverse_slope_2 = if vertices[2].pos.y - vertices[0].pos.y != 0.0 {
+            (vertices[2].pos.x - vertices[0].pos.x) / (vertices[2].pos.y - vertices[0].pos.y).abs()
+        } else {
+            0.0
+        };
+
+        if vertices[1].pos.y - vertices[0].pos.y != 0.0 {
+            for y in vertices[0].pos.y as usize..=vertices[1].pos.y as usize {
+                let x0 = vertices[1].pos.x + (y as f32 - vertices[1].pos.y) * flat_bottom_inverse_slope_1;
+                let x1 = vertices[0].pos.x + (y as f32 - vertices[0].pos.y) * flat_bottom_inverse_slope_2;
+
+                let x_start = if x0 < x1 { x0 } else { x1 };
+                let x_end = if x1 > x0 { x1 } else { x0 };
+
+                for x in x_start as usize..=x_end as usize {
+                    self.set(x, y, if x % 2 == 0 && y % 2 == 0 { Color::new(0, 0, 0) } else { Color::new(0, 0xFF, 0) });
+                }
+            }
+        }
+        
+        // Render flat top triangle
+        let flat_top_inverse_slope_1 = if vertices[2].pos.y - vertices[1].pos.y != 0.0 {
+            (vertices[2].pos.x - vertices[1].pos.x) / (vertices[2].pos.y - vertices[1].pos.y).abs()
+        } else {
+            0.0
+        };
+
+        let flat_top_inverse_slope_2 = if vertices[2].pos.y - vertices[0].pos.y != 0.0 {
+            (vertices[2].pos.x - vertices[0].pos.x) / (vertices[2].pos.y - vertices[0].pos.y).abs()
+        } else {
+            0.0
+        };
+
+        if vertices[2].pos.y - vertices[1].pos.y != 0.0 {
+            for y in vertices[1].pos.y as usize..=vertices[2].pos.y as usize {
+                let x0 = vertices[1].pos.x + (y as f32 - vertices[1].pos.y) * flat_top_inverse_slope_1;
+                let x1 = vertices[0].pos.x + (y as f32 - vertices[0].pos.y) * flat_top_inverse_slope_2;
+
+                let x_start = if x0 < x1 { x0 as usize } else { x1 as usize };
+                let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
+
+                for x in x_start..=x_end {
+                    self.set(x, y, if x % 2 == 0 && y % 2 == 0 { Color::new(0, 0, 0) } else { Color::new(0, 0xFF, 0) });
+                }
+            }
         }
     }
 }
