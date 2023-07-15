@@ -166,7 +166,8 @@ impl ColorBuffer {
             p
         );
 
-        let p_uv = a.uv * alpha + b.uv * beta + c.uv * gamma;
+        let interpolated_reciprocal_w = 1.0 / a.pos.w * alpha + 1.0 / b.pos.w * beta + 1.0 / c.pos.w * gamma;
+        let p_uv = ((a.uv / a.pos.w * alpha) + (b.uv / b.pos.w * beta) + (c.uv / c.pos.w * gamma)) / interpolated_reciprocal_w;
         let p_uv = Tex2::new(p_uv.u.clamp(0.0, 1.0), p_uv.v.clamp(0.0, 1.0));
 
         let color = texture.sample(p_uv);

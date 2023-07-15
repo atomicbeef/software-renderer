@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, Div};
 
 use crate::color::Color;
 
@@ -32,6 +32,17 @@ impl Mul<f32> for Tex2 {
         Self {
             u: self.u * rhs,
             v: self.v * rhs,
+        }
+    }
+}
+
+impl Div<f32> for Tex2 {
+    type Output = Tex2;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Self {
+            u: self.u / rhs,
+            v: self.v / rhs
         }
     }
 }
