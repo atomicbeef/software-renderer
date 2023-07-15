@@ -158,7 +158,7 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_texel(&mut self, a: Vertex, b: Vertex, c: Vertex, p: Vec2, texture: &Texture) {
+    pub fn draw_texel(&mut self, a: Vertex, b: Vertex, c: Vertex, p: Vec2, texture: &Texture, flip_v: bool) {
         let (alpha, beta, gamma) = barycentric_weights(
             Vec2::from(a.pos),
             Vec2::from(b.pos),
@@ -168,14 +168,18 @@ impl ColorBuffer {
 
         let interpolated_reciprocal_w = 1.0 / a.pos.w * alpha + 1.0 / b.pos.w * beta + 1.0 / c.pos.w * gamma;
         let p_uv = ((a.uv / a.pos.w * alpha) + (b.uv / b.pos.w * beta) + (c.uv / c.pos.w * gamma)) / interpolated_reciprocal_w;
-        let p_uv = Tex2::new(p_uv.u.clamp(0.0, 1.0), p_uv.v.clamp(0.0, 1.0));
+        let mut p_uv = Tex2::new(p_uv.u.clamp(0.0, 1.0), p_uv.v.clamp(0.0, 1.0));
+
+        if flip_v {
+            p_uv.v = 1.0 - p_uv.v;
+        }
 
         let color = texture.sample(p_uv);
 
         self.set(p.x as usize, p.y as usize, color);
     }
 
-    pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture) {
+    pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture, flip_v: bool) {
         // Floor vertex x and y components to align to pixels and prevent rendering artifacts
         let mut vertices = [
             Vertex {
@@ -231,7 +235,14 @@ impl ColorBuffer {
                 let x_end = if x1 > x0 { x1 } else { x0 };
 
                 for x in x_start as usize..=x_end as usize {
-                    self.draw_texel(vertices[0], vertices[1], vertices[2], Vec2::new(x as f32, y as f32), texture)
+                    self.draw_texel(
+                        vertices[0],
+                        vertices[1],
+                        vertices[2],
+                        Vec2::new(x as f32, y as f32),
+                        texture,
+                        flip_v
+                    )
                 }
             }
         }
@@ -258,7 +269,14 @@ impl ColorBuffer {
                 let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
 
                 for x in x_start..=x_end {
-                    self.draw_texel(vertices[0], vertices[1], vertices[2], Vec2::new(x as f32, y as f32), texture)
+                    self.draw_texel(
+                        vertices[0],
+                        vertices[1],
+                        vertices[2],
+                        Vec2::new(x as f32, y as f32),
+                        texture,
+                        flip_v
+                    )
                 }
             }
         }

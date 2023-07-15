@@ -44,6 +44,7 @@ struct RenderSettings {
     rotate: bool,
     rotation: Vec3,
     scale: bool,
+    flip_uvs_vertically: bool,
 }
 
 fn update(
@@ -118,9 +119,9 @@ fn update(
             projected_vertices[0],
             projected_vertices[1],
             projected_vertices[2],
-            face.a_uv,
-            face.b_uv,
-            face.c_uv,
+            mesh.vertex_uvs[face.a_uv as usize],
+            mesh.vertex_uvs[face.b_uv as usize],
+            mesh.vertex_uvs[face.c_uv as usize],
             (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0,
             triangle_color
         );
@@ -170,11 +171,11 @@ fn render(
                 buffer.draw_filled_triangle(triangle, triangle.color);
             },
             RenderMode::Textured => {
-                buffer.draw_textured_triangle(triangle, &texture)
+                buffer.draw_textured_triangle(triangle, &texture, settings.flip_uvs_vertically)
             },
             RenderMode::WireframeTextured => {
                 buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                buffer.draw_textured_triangle(triangle, &texture);
+                buffer.draw_textured_triangle(triangle, &texture, settings.flip_uvs_vertically);
             }
         };
     }
@@ -244,6 +245,7 @@ fn main() -> ExitCode {
         rotate: true,
         rotation: Vec3::splat(0.01),
         scale: true,
+        flip_uvs_vertically: false,
     };
 
     let start_time = Instant::now();
@@ -297,6 +299,10 @@ fn main() -> ExitCode {
 
         if window.is_key_pressed(Key::P, KeyRepeat::No) {
             mesh.rotation = Vec3::default();
+        }
+
+        if window.is_key_pressed(Key::F, KeyRepeat::No) {
+            render_settings.flip_uvs_vertically = !render_settings.flip_uvs_vertically;
         }
 
         update(

@@ -6,14 +6,14 @@ pub struct Face {
     pub a: u16,
     pub b: u16,
     pub c: u16,
-    pub a_uv: Tex2,
-    pub b_uv: Tex2,
-    pub c_uv: Tex2,
+    pub a_uv: u16,
+    pub b_uv: u16,
+    pub c_uv: u16,
     pub color: Color,
 }
 
 impl Face {
-    pub const fn new(a: u16, b: u16, c: u16, a_uv: Tex2, b_uv: Tex2, c_uv: Tex2, color: Color) -> Self {
+    pub const fn new(a: u16, b: u16, c: u16, a_uv: u16, b_uv: u16, c_uv: u16, color: Color) -> Self {
         Self { a, b, c, a_uv, b_uv, c_uv, color }
     }
 }
