@@ -58,6 +58,7 @@ fn update(
     triangles_to_render.clear();
 
     // Animate mesh
+    mesh.scale = if settings.scale { Vec3::splat(1.0) * (2.0 * elapsed_time.sin().abs() + 0.05) } else { Vec3::splat(1.0) };
     mesh.rotation = if settings.rotate { mesh.rotation + settings.rotation } else { mesh.rotation };
     mesh.translation.x = if settings.translate { 2.0 * elapsed_time.sin() } else { 0.0 };
     mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
@@ -238,13 +239,13 @@ fn main() -> ExitCode {
     );
 
     let mut render_settings = RenderSettings {
-        render_mode: RenderMode::WireframeFilled,
+        render_mode: RenderMode::Textured,
         backface_cull: true,
         shaded: true,
-        translate: true,
+        translate: false,
         rotate: true,
-        rotation: Vec3::splat(0.01),
-        scale: true,
+        rotation: Vec3::new(0.0, 0.01, 0.0),
+        scale: false,
         flip_uvs_vertically: false,
     };
 
