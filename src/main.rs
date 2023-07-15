@@ -42,6 +42,7 @@ struct RenderSettings {
     shaded: bool,
     translate: bool,
     rotate: bool,
+    rotation: Vec3,
     scale: bool,
 }
 
@@ -56,9 +57,7 @@ fn update(
     triangles_to_render.clear();
 
     // Animate mesh
-    mesh.rotation.x = if settings.rotate { mesh.rotation.x + 0.005 } else { mesh.rotation.x };
-    mesh.rotation.y = if settings.rotate { mesh.rotation.y + 0.01 } else { mesh.rotation.y };
-    mesh.rotation.z = if settings.rotate { mesh.rotation.z + 0.01 } else { mesh.rotation.z };
+    mesh.rotation = if settings.rotate { mesh.rotation + settings.rotation } else { Vec3::default() };
     mesh.translation.x = if settings.translate { 2.0 * elapsed_time.sin() } else { 0.0 };
     mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
     mesh.translation.z = 5.0;
@@ -228,6 +227,7 @@ fn main() -> ExitCode {
         shaded: true,
         translate: true,
         rotate: true,
+        rotation: Vec3::splat(0.01),
         scale: true,
     };
 
@@ -275,6 +275,20 @@ fn main() -> ExitCode {
         }
         if window.is_key_pressed(Key::S, KeyRepeat::No) {
             render_settings.scale = !render_settings.scale;
+        }
+
+        if window.is_key_pressed(Key::X, KeyRepeat::No) {
+            render_settings.rotation.x = if render_settings.rotation.x > 0.0 { 0.0 } else { 0.01 };
+        }
+        if window.is_key_pressed(Key::Y, KeyRepeat::No) {
+            render_settings.rotation.y = if render_settings.rotation.y > 0.0 { 0.0 } else { 0.01 };
+        }
+        if window.is_key_pressed(Key::Z, KeyRepeat::No) {
+            render_settings.rotation.z = if render_settings.rotation.z > 0.0 { 0.0 } else { 0.01 };
+        }
+
+        if window.is_key_pressed(Key::P, KeyRepeat::No) {
+            mesh.rotation = Vec3::default();
         }
 
         update(
