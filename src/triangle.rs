@@ -18,6 +18,12 @@ impl Face {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Vertex {
+    pub pos: Vec2,
+    pub uv: Tex2,
+}
+
 #[derive(Debug)]
 pub struct Triangle {
     pub points: [Vec2; 3],

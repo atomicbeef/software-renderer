@@ -1,8 +1,29 @@
 use crate::color::Color;
 use crate::color_buffer::ColorBuffer;
 use crate::texture::{Texture, Tex2};
-use crate::triangle::Triangle;
+use crate::triangle::{Triangle, Vertex};
 use crate::Vec2;
+
+fn barycentric_weights(a: Vec2, b: Vec2, c: Vec2, p: Vec2) -> (f32, f32, f32) {
+    let ac = c - a;
+    let ab = b - a;
+    let ac_cross_ab = ac.cross(ab);
+    
+    let pc = c - p;
+    let pb = b - p;
+    let pc_cross_pb = pc.cross(pb);
+    
+    let alpha = pc_cross_pb / ac_cross_ab;
+
+    let ap = p - a;
+    let ac_cross_ap = ac.cross(ap);
+
+    let beta = ac_cross_ap / ac_cross_ab;
+
+    let gamma = 1.0 - alpha - beta;
+
+    (alpha, beta, gamma)
+}
 
 impl ColorBuffer {
     pub fn draw_grid(&mut self) {
@@ -136,13 +157,18 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture) {
-        #[derive(Debug)]
-        struct Vertex {
-            pos: Vec2,
-            uv: Tex2,
-        }
+    pub fn draw_texel(&mut self, a: Vertex, b: Vertex, c: Vertex, p: Vec2, texture: &Texture) {
+        let (alpha, beta, gamma) = barycentric_weights(a.pos, b.pos, c.pos, p);
 
+        let p_uv = a.uv * alpha + b.uv * beta + c.uv * gamma;
+        let p_uv = Tex2::new(p_uv.u.clamp(0.0, 1.0), p_uv.v.clamp(0.0, 1.0));
+
+        let color = texture.sample(p_uv);
+
+        self.set(p.x as usize, p.y as usize, color);
+    }
+
+    pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture) {
         // Floor vertices positions to prevent rendering artifacts
         let mut vertices = [
             Vertex { pos: triangle.points[0].floor(), uv: triangle.tex_coords[0] },
@@ -174,7 +200,7 @@ impl ColorBuffer {
                 let x_end = if x1 > x0 { x1 } else { x0 };
 
                 for x in x_start as usize..=x_end as usize {
-                    self.set(x, y, if x % 2 == 0 && y % 2 == 0 { Color::new(0, 0, 0) } else { Color::new(0, 0xFF, 0) });
+                    self.draw_texel(vertices[0], vertices[1], vertices[2], Vec2::new(x as f32, y as f32), texture)
                 }
             }
         }
@@ -201,7 +227,7 @@ impl ColorBuffer {
                 let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
 
                 for x in x_start..=x_end {
-                    self.set(x, y, if x % 2 == 0 && y % 2 == 0 { Color::new(0, 0, 0) } else { Color::new(0, 0xFF, 0) });
+                    self.draw_texel(vertices[0], vertices[1], vertices[2], Vec2::new(x as f32, y as f32), texture)
                 }
             }
         }

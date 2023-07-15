@@ -69,8 +69,12 @@ impl Vec2 {
         f32::sqrt(self.x * self.x + self.y * self.y)
     }
 
-    pub fn dot(&self, b: &Self) -> f32 {
+    pub fn dot(&self, b: Self) -> f32 {
         self.x * b.x + self.y * b.y
+    }
+
+    pub fn cross(&self, b: Self) -> f32 {
+        self.x * b.y - self.y * b.x
     }
 
     pub fn normalize(&mut self) {
@@ -163,7 +167,7 @@ impl Vec3 {
         f32::sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
     }
 
-    pub fn cross(&self, b: &Self) -> Self {
+    pub fn cross(&self, b: Self) -> Self {
         Vec3::new(
             self.y * b.z - self.z * b.y,
             self.z * b.x - self.x * b.z,
@@ -171,7 +175,7 @@ impl Vec3 {
         )
     }
 
-    pub fn dot(&self, b: &Self) -> f32 {
+    pub fn dot(&self, b: Self) -> f32 {
         self.x * b.x + self.y * b.y + self.z * b.z
     }
 

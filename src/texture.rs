@@ -1,3 +1,5 @@
+use std::ops::{Add, Mul};
+
 use crate::color::Color;
 
 #[derive(Clone, Copy, Debug)]
@@ -12,6 +14,28 @@ impl Tex2 {
     }
 }
 
+impl Add for Tex2 {
+    type Output = Tex2;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            u: self.u + rhs.u,
+            v: self.v + rhs.v,
+        }
+    }
+}
+
+impl Mul<f32> for Tex2 {
+    type Output = Tex2;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self {
+            u: self.u * rhs,
+            v: self.v * rhs,
+        }
+    }
+}
+
 pub struct Texture {
     pub width: u16,
     pub height: u16,
@@ -19,14 +43,6 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn from_color(width: u16, height: u16, fill_color: Color) -> Self {
-        Self {
-            width,
-            height,
-            pixels: vec![fill_color; width as usize * height as usize]
-        }
-    }
-
     pub fn grid(width: u16, height: u16, fill_color: Color, line_color: Color) -> Self {
         let mut pixels = Vec::with_capacity(width as usize * height as usize);
         for y in 0..height {
@@ -43,8 +59,8 @@ impl Texture {
     }
 
     pub fn sample(&self, pos: Tex2) -> Color {
-        let col = (self.width as f32 * pos.u).floor() as usize;
-        let row = (self.height as f32 * pos.v).floor() as usize;
+        let col = ((self.width - 1) as f32 * pos.u) as usize;
+        let row = ((self.height - 1) as f32 * pos.v) as usize;
         let index = row * self.height as usize + col;
         
         self.pixels[index]
