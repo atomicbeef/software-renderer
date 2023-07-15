@@ -1,6 +1,6 @@
 use crate::color::Color;
 use crate::texture::Tex2;
-use crate::vector::Vec2;
+use crate::vector::Vec4;
 
 pub struct Face {
     pub a: u16,
@@ -20,20 +20,20 @@ impl Face {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vertex {
-    pub pos: Vec2,
+    pub pos: Vec4,
     pub uv: Tex2,
 }
 
 #[derive(Debug)]
 pub struct Triangle {
-    pub points: [Vec2; 3],
+    pub points: [Vec4; 3],
     pub tex_coords: [Tex2; 3],
     pub depth: f32,
     pub color: Color,
 }
 
 impl Triangle {
-    pub fn new(a: Vec2, b: Vec2, c: Vec2, a_uv: Tex2, b_uv: Tex2, c_uv: Tex2, depth: f32, color: Color) -> Self {
+    pub fn new(a: Vec4, b: Vec4, c: Vec4, a_uv: Tex2, b_uv: Tex2, c_uv: Tex2, depth: f32, color: Color) -> Self {
         Self { points: [a, b, c], tex_coords: [a_uv, b_uv, c_uv], depth, color }
     }
 }

@@ -3,6 +3,7 @@ use crate::color_buffer::ColorBuffer;
 use crate::texture::{Texture, Tex2};
 use crate::triangle::{Triangle, Vertex};
 use crate::Vec2;
+use crate::vector::Vec4;
 
 fn barycentric_weights(a: Vec2, b: Vec2, c: Vec2, p: Vec2) -> (f32, f32, f32) {
     let ac = c - a;
@@ -95,9 +96,9 @@ impl ColorBuffer {
     pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: Color) {
         // Floor vertices positions to prevent rendering artifacts
         let mut vertices = [
-            triangle.points[0].floor(),
-            triangle.points[1].floor(),
-            triangle.points[2].floor(),
+            Vec2::from(triangle.points[0]).floor(),
+            Vec2::from(triangle.points[1]).floor(),
+            Vec2::from(triangle.points[2]).floor(),
         ];
 
         vertices.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
@@ -158,7 +159,12 @@ impl ColorBuffer {
     }
 
     pub fn draw_texel(&mut self, a: Vertex, b: Vertex, c: Vertex, p: Vec2, texture: &Texture) {
-        let (alpha, beta, gamma) = barycentric_weights(a.pos, b.pos, c.pos, p);
+        let (alpha, beta, gamma) = barycentric_weights(
+            Vec2::from(a.pos),
+            Vec2::from(b.pos),
+            Vec2::from(c.pos),
+            p
+        );
 
         let p_uv = a.uv * alpha + b.uv * beta + c.uv * gamma;
         let p_uv = Tex2::new(p_uv.u.clamp(0.0, 1.0), p_uv.v.clamp(0.0, 1.0));
@@ -169,11 +175,35 @@ impl ColorBuffer {
     }
 
     pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture) {
-        // Floor vertices positions to prevent rendering artifacts
+        // Floor vertex x and y components to align to pixels and prevent rendering artifacts
         let mut vertices = [
-            Vertex { pos: triangle.points[0].floor(), uv: triangle.tex_coords[0] },
-            Vertex { pos: triangle.points[1].floor(), uv: triangle.tex_coords[1] },
-            Vertex { pos: triangle.points[2].floor(), uv: triangle.tex_coords[2] },
+            Vertex {
+                pos: Vec4::new(
+                    triangle.points[0].x.floor(),
+                    triangle.points[0].y.floor(),
+                    triangle.points[0].z,
+                    triangle.points[0].w,
+                ),
+                uv: triangle.tex_coords[0]
+            },
+            Vertex {
+                pos: Vec4::new(
+                    triangle.points[1].x.floor(),
+                    triangle.points[1].y.floor(),
+                    triangle.points[1].z,
+                    triangle.points[1].w,
+                ),
+                uv: triangle.tex_coords[1]
+            },
+            Vertex {
+                pos: Vec4::new(
+                    triangle.points[2].x.floor(),
+                    triangle.points[2].y.floor(),
+                    triangle.points[2].z,
+                    triangle.points[2].w,
+                ),
+                uv: triangle.tex_coords[2]
+            },
         ];
 
         vertices.sort_by(|a, b| a.pos.y.partial_cmp(&b.pos.y).unwrap());

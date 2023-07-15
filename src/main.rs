@@ -103,7 +103,7 @@ fn update(
 
         // Project
         let projected_vertices = transformed_vertices.map(|vertex| {
-            let mut projected = Vec2::from(projection_matrix.project_vec4(vertex));
+            let mut projected = projection_matrix.project_vec4(vertex);
             
             // Scale and translate into view
             projected.x *= WINDOW_WIDTH as f32 / 1.0;
