@@ -136,8 +136,8 @@ impl Texture {
     }
 
     pub fn sample(&self, pos: Tex2) -> Color {
-        let col = ((self.width - 1) as f32 * pos.u) as usize;
-        let row = ((self.height - 1) as f32 * pos.v) as usize;
+        let col = ((self.width - 1) as f32 * pos.u) as usize % self.width as usize;
+        let row = ((self.height - 1) as f32 * pos.v) as usize % self.height as usize;
         let index = row * self.height as usize + col;
         
         self.pixels[index]
