@@ -1,4 +1,7 @@
+use std::borrow::Cow;
 use std::ops::{Add, Mul, Div};
+use std::path::Path;
+use std::fs::File;
 
 use crate::color::Color;
 
@@ -47,14 +50,39 @@ impl Div<f32> for Tex2 {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum TextureError<'a> {
+    ReadError(Cow<'a, str>),
+    DecodeError,
+    UnsupportedBitDepth,
+    UnsupportedColorType,
+}
+
+impl std::fmt::Display for TextureError<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ReadError(path) => {
+                write!(f, "could not open PNG texture for reading at {path}",)
+            },
+            Self::DecodeError => { write!(f, "could not decode PNG texture") },
+            Self::UnsupportedBitDepth => { write!(f, "unsupported PNG texture bit depth") },
+            Self::UnsupportedColorType => { write!(f, "unsupported PNG color type") },
+        }
+    }
+}
+
 pub struct Texture {
-    pub width: u16,
-    pub height: u16,
+    pub width: u32,
+    pub height: u32,
     pub pixels: Vec<Color>,
 }
 
 impl Texture {
-    pub fn grid(width: u16, height: u16, fill_color: Color, line_color: Color) -> Self {
+    pub fn from_color(width: u32, height: u32, color: Color) -> Self {
+        Self { width, height, pixels: vec![color; width as usize * height as usize] }
+    }
+
+    pub fn grid(width: u32, height: u32, fill_color: Color, line_color: Color) -> Self {
         let mut pixels = Vec::with_capacity(width as usize * height as usize);
         for y in 0..height {
             for x in 0..width {
@@ -67,6 +95,44 @@ impl Texture {
         }
         
         Self { width, height, pixels }
+    }
+
+    pub fn from_png(path: &Path) -> Result<Self, TextureError> {
+        let png_file = File::open(path).or_else(|_| Err(TextureError::ReadError(path.to_string_lossy())))?;
+
+        let decoder = png::Decoder::new(png_file);
+        let mut reader = decoder.read_info().or(Err(TextureError::DecodeError))?;
+        
+        let mut byte_buffer: Vec<u8> = vec![0; reader.output_buffer_size()];
+        let frame_metadata = reader.next_frame(&mut byte_buffer).or(Err(TextureError::DecodeError))?;
+
+        if !matches!(frame_metadata.bit_depth, png::BitDepth::Eight) {
+            return Err(TextureError::UnsupportedBitDepth);
+        }
+
+        let pixels = match frame_metadata.color_type {
+            png::ColorType::Rgba => {
+                byte_buffer.chunks_exact(4).map(|colors| Color::new(
+                    colors[0],
+                    colors[1],
+                    colors[2]
+                )).collect()
+            },
+            png::ColorType::Rgb => {
+                byte_buffer.chunks_exact(3).map(|colors| Color::new(
+                    colors[0],
+                    colors[1],
+                    colors[2]
+                )).collect()
+            },
+            _ => { return Err(TextureError::UnsupportedColorType); }
+        };
+
+        Ok(Self {
+            width: frame_metadata.width,
+            height: frame_metadata.height,
+            pixels
+        })
     }
 
     pub fn sample(&self, pos: Tex2) -> Color {

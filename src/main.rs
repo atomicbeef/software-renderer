@@ -210,6 +210,21 @@ fn main() -> ExitCode {
         Mesh::from_obj(mesh_path)
     };
 
+    let texture = if args.len() == 1 {
+        Texture::grid(
+            64,
+            64,
+            Color::new(0xFF, 0, 0),
+            Color::new(0xFF, 0xFF, 0xFF)
+        )
+    } else {
+        let texture_path = Path::new(&args[1]).with_extension("png");
+        Texture::from_png(&texture_path).unwrap_or_else(|err| {
+            eprintln!("Error reading texture: {err}");
+            Texture::from_color(1, 1, Color::new(0xFF, 0x00, 0xFF))
+        })
+    };
+
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
     
     let camera_position = Vec3::new(0.0, 0.0, 0.0);
@@ -230,13 +245,6 @@ fn main() -> ExitCode {
         rotation: Vec3::splat(0.01),
         scale: true,
     };
-
-    let debug_texture = Texture::grid(
-        64,
-        64,
-        Color::new(0xFF, 0, 0),
-        Color::new(0xFF, 0xFF, 0xFF)
-    );
 
     let start_time = Instant::now();
 
@@ -299,7 +307,7 @@ fn main() -> ExitCode {
             render_settings,
             start_time.elapsed().as_secs_f32(),
         );
-        render(&mut buffer, &mut window, &triangles_to_render, render_settings, &debug_texture);
+        render(&mut buffer, &mut window, &triangles_to_render, render_settings, &texture);
     }
 
     return ExitCode::from(0);
