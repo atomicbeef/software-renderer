@@ -209,20 +209,11 @@ mod tests {
         let b = Mat4::scale(1.0, 2.0, 3.0);
         let c = a * b;
 
-        println!("{c:?}");
-
         assert!(eq_mat4(c, Mat4::new(
             Vec4::new(1.0, 0.0, 0.0, 0.0),
             Vec4::new(0.0, 2.0, 0.0, 0.0),
             Vec4::new(0.0, 0.0, 3.0, 0.0),
             Vec4::new(1.0, 0.0, 5.0, 1.0)
         )));
-    }
-
-    #[test]
-    fn rotate_y_matrix() {
-        let a = Mat4::rotation_y(std::f32::consts::FRAC_PI_4);
-
-        println!("{a:?}");
     }
 }
