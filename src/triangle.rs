@@ -28,12 +28,11 @@ pub struct Vertex {
 pub struct Triangle {
     pub points: [Vec4; 3],
     pub tex_coords: [Tex2; 3],
-    pub depth: f32,
     pub color: Color,
 }
 
 impl Triangle {
-    pub fn new(a: Vec4, b: Vec4, c: Vec4, a_uv: Tex2, b_uv: Tex2, c_uv: Tex2, depth: f32, color: Color) -> Self {
-        Self { points: [a, b, c], tex_coords: [a_uv, b_uv, c_uv], depth, color }
+    pub fn new(a: Vec4, b: Vec4, c: Vec4, a_uv: Tex2, b_uv: Tex2, c_uv: Tex2, color: Color) -> Self {
+        Self { points: [a, b, c], tex_coords: [a_uv, b_uv, c_uv], color }
     }
 }

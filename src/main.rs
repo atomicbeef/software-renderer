@@ -125,15 +125,11 @@ fn update(
             mesh.vertex_uvs[face.a_uv as usize],
             mesh.vertex_uvs[face.b_uv as usize],
             mesh.vertex_uvs[face.c_uv as usize],
-            (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0,
             triangle_color
         );
 
         triangles_to_render.push(triangle);
     }
-
-    // Sort triangles by depth
-    triangles_to_render.sort_by(|a, b| { b.depth.partial_cmp(&a.depth).unwrap() });
 }
 
 fn render(
