@@ -94,12 +94,51 @@ impl ColorBuffer {
         );
     }
 
-    pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: Color) {
-        // Floor vertices positions to prevent rendering artifacts
+    fn draw_color_and_depth(
+        &mut self,
+        a: Vec4,
+        b: Vec4,
+        c: Vec4,
+        p: Vec2,
+        color: Color,
+        depth_buffer: &mut DepthBuffer
+    ) {
+        let (alpha, beta, gamma) = barycentric_weights(
+            Vec2::from(a),
+            Vec2::from(b),
+            Vec2::from(c),
+            p
+        );
+
+        let interpolated_reciprocal_w = 1.0 / a.w * alpha + 1.0 / b.w * beta + 1.0 / c.w * gamma;
+
+        if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as usize, p.y as usize) {
+            self.set(p.x as usize, p.y as usize, color);
+            depth_buffer.set(p.x as usize, p.y as usize, 1.0 - interpolated_reciprocal_w);
+        }
+    }
+
+    pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: Color, depth_buffer: &mut DepthBuffer) {
+        // Floor vertex x and y components to align to pixels and prevent rendering artifacts
         let mut vertices = [
-            Vec2::from(triangle.points[0]).floor(),
-            Vec2::from(triangle.points[1]).floor(),
-            Vec2::from(triangle.points[2]).floor(),
+            Vec4::new(
+                triangle.points[0].x.floor(),
+                triangle.points[0].y.floor(),
+                triangle.points[0].z,
+                triangle.points[0].w
+            ),
+            Vec4::new(
+                triangle.points[1].x.floor(),
+                triangle.points[1].y.floor(),
+                triangle.points[1].z,
+                triangle.points[1].w
+            ),
+            Vec4::new(
+                triangle.points[2].x.floor(),
+                triangle.points[2].y.floor(),
+                triangle.points[2].z,
+                triangle.points[2].w
+            ),
         ];
 
         vertices.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
@@ -126,7 +165,14 @@ impl ColorBuffer {
                 let x_end = if x1 > x0 { x1 } else { x0 };
 
                 for x in x_start as usize..=x_end as usize {
-                    self.set(x, y, color);
+                    self.draw_color_and_depth(
+                        vertices[0],
+                        vertices[1],
+                        vertices[2],
+                        Vec2::new(x as f32, y as f32),
+                        color,
+                        depth_buffer
+                    );
                 }
             }
         }
@@ -153,13 +199,20 @@ impl ColorBuffer {
                 let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
 
                 for x in x_start..=x_end {
-                    self.set(x, y, color);
+                    self.draw_color_and_depth(
+                        vertices[0],
+                        vertices[1],
+                        vertices[2],
+                        Vec2::new(x as f32, y as f32),
+                        color,
+                        depth_buffer
+                    );
                 }
             }
         }
     }
 
-    pub fn draw_texel(
+    fn draw_texel(
         &mut self,
         a: Vertex,
         b: Vertex,

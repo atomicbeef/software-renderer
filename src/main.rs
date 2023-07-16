@@ -165,11 +165,11 @@ fn render(
                 color_buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
             },
             RenderMode::Filled => {
-                color_buffer.draw_filled_triangle(triangle, triangle.color);
+                color_buffer.draw_filled_triangle(triangle, triangle.color, depth_buffer);
             },
             RenderMode::WireframeFilled => {
                 color_buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                color_buffer.draw_filled_triangle(triangle, triangle.color);
+                color_buffer.draw_filled_triangle(triangle, triangle.color, depth_buffer);
             },
             RenderMode::Textured => {
                 color_buffer.draw_textured_triangle(triangle, &texture, depth_buffer, settings.flip_uvs_vertically)
