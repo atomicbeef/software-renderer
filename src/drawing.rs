@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::color_buffer::ColorBuffer;
+use crate::depth_buffer::DepthBuffer;
 use crate::texture::Texture;
 use crate::triangle::{Triangle, Vertex};
 use crate::Vec2;
@@ -158,7 +159,16 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_texel(&mut self, a: Vertex, b: Vertex, c: Vertex, p: Vec2, texture: &Texture, flip_v: bool) {
+    pub fn draw_texel(
+        &mut self,
+        a: Vertex,
+        b: Vertex,
+        c: Vertex,
+        p: Vec2,
+        texture: &Texture,
+        depth_buffer: &mut DepthBuffer,
+        flip_v: bool
+    ) {
         let (alpha, beta, gamma) = barycentric_weights(
             Vec2::from(a.pos),
             Vec2::from(b.pos),
@@ -175,10 +185,19 @@ impl ColorBuffer {
 
         let color = texture.sample(p_uv);
 
-        self.set(p.x as usize, p.y as usize, color);
+        if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as usize, p.y as usize) {
+            self.set(p.x as usize, p.y as usize, color);
+            depth_buffer.set(p.x as usize, p.y as usize, 1.0 - interpolated_reciprocal_w);
+        }
     }
 
-    pub fn draw_textured_triangle(&mut self, triangle: &Triangle, texture: &Texture, flip_v: bool) {
+    pub fn draw_textured_triangle(
+        &mut self,
+        triangle: &Triangle,
+        texture: &Texture,
+        depth_buffer: &mut DepthBuffer,
+        flip_v: bool
+    ) {
         // Floor vertex x and y components to align to pixels and prevent rendering artifacts
         let mut vertices = [
             Vertex {
@@ -240,6 +259,7 @@ impl ColorBuffer {
                         vertices[2],
                         Vec2::new(x as f32, y as f32),
                         texture,
+                        depth_buffer,
                         flip_v
                     )
                 }
@@ -274,6 +294,7 @@ impl ColorBuffer {
                         vertices[2],
                         Vec2::new(x as f32, y as f32),
                         texture,
+                        depth_buffer,
                         flip_v
                     )
                 }

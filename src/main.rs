@@ -3,11 +3,13 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use color::Color;
+use depth_buffer::DepthBuffer;
 use matrix::Mat4;
 use minifb::{Key, Window, WindowOptions, KeyRepeat};
 
 mod color;
 mod color_buffer;
+mod depth_buffer;
 mod drawing;
 mod matrix;
 mod mesh;
@@ -135,13 +137,15 @@ fn update(
 }
 
 fn render(
-    buffer: &mut ColorBuffer,
+    color_buffer: &mut ColorBuffer,
+    depth_buffer: &mut DepthBuffer,
     window: &mut Window,
     triangles_to_render: &[Triangle],
     settings: RenderSettings,
     texture: &Texture,
 ) {
-    buffer.draw_grid();
+    color_buffer.draw_grid();
+    depth_buffer.clear(1.0);
 
     for triangle in triangles_to_render.iter() {
         for point in triangle.points {
@@ -150,7 +154,7 @@ fn render(
             }
     
             if matches!(settings.render_mode, RenderMode::WireframeVertex) {
-                buffer.draw_rect(
+                color_buffer.draw_rect(
                     point.x as usize,
                     point.y as usize,
                     2,
@@ -162,29 +166,29 @@ fn render(
 
         match settings.render_mode {
             RenderMode::Wireframe | RenderMode::WireframeVertex => {
-                buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
+                color_buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
             },
             RenderMode::Filled => {
-                buffer.draw_filled_triangle(triangle, triangle.color);
+                color_buffer.draw_filled_triangle(triangle, triangle.color);
             },
             RenderMode::WireframeFilled => {
-                buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                buffer.draw_filled_triangle(triangle, triangle.color);
+                color_buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
+                color_buffer.draw_filled_triangle(triangle, triangle.color);
             },
             RenderMode::Textured => {
-                buffer.draw_textured_triangle(triangle, &texture, settings.flip_uvs_vertically)
+                color_buffer.draw_textured_triangle(triangle, &texture, depth_buffer, settings.flip_uvs_vertically)
             },
             RenderMode::WireframeTextured => {
-                buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                buffer.draw_textured_triangle(triangle, &texture, settings.flip_uvs_vertically);
+                color_buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
+                color_buffer.draw_textured_triangle(triangle, &texture, depth_buffer, settings.flip_uvs_vertically);
             }
         };
     }
 
-    window.update_with_buffer(buffer.buffer(), buffer.width(), buffer.height())
+    window.update_with_buffer(color_buffer.buffer(), color_buffer.width(), color_buffer.height())
         .unwrap();
     
-    buffer.clear(Color::new(0, 0, 0));
+    color_buffer.clear(Color::new(0, 0, 0));
 }
 
 fn main() -> ExitCode {
@@ -196,7 +200,8 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
 
-    let mut buffer = ColorBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
+    let mut color_buffer = ColorBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
+    let mut depth_buffer = DepthBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     let mut window = Window::new(
         "3D Renderer",
@@ -314,7 +319,7 @@ fn main() -> ExitCode {
             render_settings,
             start_time.elapsed().as_secs_f32(),
         );
-        render(&mut buffer, &mut window, &triangles_to_render, render_settings, &texture);
+        render(&mut color_buffer, &mut depth_buffer, &mut window, &triangles_to_render, render_settings, &texture);
     }
 
     return ExitCode::from(0);

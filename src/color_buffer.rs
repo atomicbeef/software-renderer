@@ -22,7 +22,7 @@ impl ColorBuffer {
     pub fn buffer(&self) -> &[u32] { &self.buffer }
 
     pub fn clear(&mut self, color: Color) {
-        for c in self.buffer.iter_mut() { *c = color.into(); }
+        self.buffer.fill(color.into());
     }
 
     pub fn set(&mut self, x: usize, y: usize, color: Color) {
