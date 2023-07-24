@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{env, time::Instant};
 use std::path::Path;
 use std::process::ExitCode;
@@ -28,6 +29,8 @@ use vector::{Vec2, Vec3, Vec4};
 
 const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 768;
+
+const FRAME_RATE: f32 = 60.0;
 
 #[derive(Clone, Copy)]
 enum RenderMode {
@@ -240,6 +243,8 @@ fn main() -> ExitCode {
         WindowOptions::default()
     ).expect("Error: Window could not be created!");
 
+    window.limit_update_rate(Some(Duration::from_secs_f32(1.0 / FRAME_RATE)));
+
     let mut mesh = if args.len() == 1 {
         Mesh::cube(1.0)
     } else {
@@ -344,6 +349,9 @@ fn main() -> ExitCode {
             render_settings.flip_uvs_vertically = !render_settings.flip_uvs_vertically;
         }
 
+        let delta_time = last_frame_time.elapsed().as_secs_f32();
+        last_frame_time = Instant::now();
+
         update(
             &mut triangles_to_render,
             projection_matrix,
@@ -352,11 +360,9 @@ fn main() -> ExitCode {
             render_settings,
             &mut window,
             start_time.elapsed().as_secs_f32(),
-            last_frame_time.elapsed().as_secs_f32(),
+            delta_time,
         );
         render(&mut color_buffer, &mut depth_buffer, &mut window, &triangles_to_render, render_settings, &texture);
-
-        last_frame_time = Instant::now();
     }
 
     return ExitCode::from(0);
