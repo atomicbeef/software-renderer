@@ -2,6 +2,7 @@ use std::{env, time::Instant};
 use std::path::Path;
 use std::process::ExitCode;
 
+use camera::Camera;
 use color::Color;
 use depth_buffer::DepthBuffer;
 use matrix::Mat4;
@@ -53,7 +54,7 @@ struct RenderSettings {
 fn update(
     triangles_to_render: &mut Vec<Triangle>,
     projection_matrix: Mat4,
-    camera_position: Vec3,
+    camera: &mut Camera,
     mesh: &mut Mesh,
     settings: RenderSettings,
     elapsed_time: f32,
@@ -74,6 +75,7 @@ fn update(
     let rotation_z_matrix = Mat4::rotation_z(mesh.rotation.z);
 
     let world_matrix = translation_matrix * rotation_x_matrix * rotation_y_matrix * rotation_z_matrix * scale_matrix;
+    let camera_matrix = camera.view_matrix();
 
     for face in mesh.faces.iter() {
         let face_vertices = [
@@ -82,16 +84,16 @@ fn update(
             mesh.vertices[face.c as usize]
         ];
 
-        // Transform
-        let transformed_vertices = face_vertices.map(|vertex| world_matrix * Vec4::from(vertex));
+        // World transform
+        let world_transformed_vertices = face_vertices.map(|vertex| world_matrix * Vec4::from(vertex));
 
         // Calculate face normal for backface culling and lighting
-        let ab = Vec3::from(transformed_vertices[1]) - Vec3::from(transformed_vertices[0]);
-        let ac = Vec3::from(transformed_vertices[2]) - Vec3::from(transformed_vertices[0]);
+        let ab = Vec3::from(world_transformed_vertices[1]) - Vec3::from(world_transformed_vertices[0]);
+        let ac = Vec3::from(world_transformed_vertices[2]) - Vec3::from(world_transformed_vertices[0]);
         let normal = ab.cross(ac).normalized();
 
         if settings.backface_cull {
-            let camera_ray = camera_position - Vec3::from(transformed_vertices[0]);
+            let camera_ray = camera.translation - Vec3::from(world_transformed_vertices[0]);
 
             if normal.dot(camera_ray) < 0.0 {
                 continue;
@@ -103,8 +105,11 @@ fn update(
         let percent_lit = normal.dot(light_direction) * -0.5 + 0.5;
         let triangle_color = if settings.shaded { face.color * percent_lit } else { face.color };
 
+        // Camera transform
+        let camera_transformed_vertices = world_transformed_vertices.map(|vertex| camera_matrix * vertex);
+
         // Project
-        let projected_vertices = transformed_vertices.map(|vertex| {
+        let projected_vertices = camera_transformed_vertices.map(|vertex| {
             let mut projected = projection_matrix.project_vec4(vertex);
             
             // Scale and translate into view
@@ -229,7 +234,11 @@ fn main() -> ExitCode {
 
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
     
-    let camera_position = Vec3::new(0.0, 0.0, 0.0);
+    let mut camera = Camera::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, 1.0),
+        Vec3::new(0.0, 1.0, 0.0)
+    );
 
     let projection_matrix = Mat4::projection(
         std::f32::consts::FRAC_PI_3,
@@ -309,7 +318,7 @@ fn main() -> ExitCode {
         update(
             &mut triangles_to_render,
             projection_matrix,
-            camera_position,
+            &mut camera,
             &mut mesh,
             render_settings,
             start_time.elapsed().as_secs_f32(),
