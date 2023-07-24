@@ -77,11 +77,10 @@ impl Vec2 {
         self.x * b.y - self.y * b.x
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalized(&self) -> Self {
         let magnitude = self.magnitude();
         
-        self.x /= magnitude;
-        self.y /= magnitude;
+        Self { x: self.x / magnitude, y: self.y / magnitude }
     }
 }
 
@@ -203,12 +202,10 @@ impl Vec3 {
         }
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalized(&self) -> Self {
         let magnitude = self.magnitude();
 
-        self.x /= magnitude;
-        self.y /= magnitude;
-        self.z /= magnitude;
+        Self { x: self.x / magnitude, y: self.y / magnitude, z: self.z / magnitude }
     }
 }
 
@@ -237,13 +234,15 @@ impl Vec4 {
         self.x * b.x + self.y * b.y + self.z * b.z + self.w * b.w
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalized(&self) -> Self {
         let magnitude = self.magnitude();
 
-        self.x /= magnitude;
-        self.y /= magnitude;
-        self.z /= magnitude;
-        self.w /= magnitude;
+        Self {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+            z: self.z / magnitude,
+            w: self.w / magnitude
+        }
     }
 }
 

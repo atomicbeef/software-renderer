@@ -7,6 +7,7 @@ use depth_buffer::DepthBuffer;
 use matrix::Mat4;
 use minifb::{Key, Window, WindowOptions, KeyRepeat};
 
+mod camera;
 mod color;
 mod color_buffer;
 mod depth_buffer;
@@ -87,8 +88,7 @@ fn update(
         // Calculate face normal for backface culling and lighting
         let ab = Vec3::from(transformed_vertices[1]) - Vec3::from(transformed_vertices[0]);
         let ac = Vec3::from(transformed_vertices[2]) - Vec3::from(transformed_vertices[0]);
-        let mut normal = ab.cross(ac);
-        normal.normalize();
+        let normal = ab.cross(ac).normalized();
 
         if settings.backface_cull {
             let camera_ray = camera_position - Vec3::from(transformed_vertices[0]);
@@ -99,8 +99,7 @@ fn update(
         }
 
         // Lighting
-        let mut light_direction = Vec3::new(0.0, 0.0, 1.0);
-        light_direction.normalize();
+        let light_direction = Vec3::new(0.0, 0.0, 1.0).normalized();
         let percent_lit = normal.dot(light_direction) * -0.5 + 0.5;
         let triangle_color = if settings.shaded { face.color * percent_lit } else { face.color };
 
