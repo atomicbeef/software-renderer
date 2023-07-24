@@ -90,7 +90,7 @@ impl From<Vec4> for Vec2 {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,

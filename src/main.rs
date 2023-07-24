@@ -57,7 +57,9 @@ fn update(
     camera: &mut Camera,
     mesh: &mut Mesh,
     settings: RenderSettings,
+    window: &mut Window,
     elapsed_time: f32,
+    delta_time: f32,
 ) {
     triangles_to_render.clear();
 
@@ -67,6 +69,34 @@ fn update(
     mesh.translation.x = if settings.translate { 2.0 * elapsed_time.sin() } else { 0.0 };
     mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
     mesh.translation.z = if settings.translate { 5.0 * elapsed_time.sin() } else { 0.0 };
+
+    // Update camera translation based on input
+    let camera_movement_speed = 40000.0;
+
+    let mut camera_movement_direction = Vec3::default();
+    if window.is_key_down(Key::W) {
+        camera_movement_direction.z += 1.0;
+    }
+    if window.is_key_down(Key::S) {
+        camera_movement_direction.z -= 1.0;
+    }
+    if window.is_key_down(Key::D) {
+        camera_movement_direction.x += 1.0;
+    }
+    if window.is_key_down(Key::A) {
+        camera_movement_direction.x -= 1.0;
+    }
+    if window.is_key_down(Key::Space) {
+        camera_movement_direction.y += 1.0;
+    }
+    if window.is_key_down(Key::LeftShift) {
+        camera_movement_direction.y -= 1.0;
+    }
+
+    // If the vector is zero, normalization will fail
+    if camera_movement_direction != Vec3::default() {
+        camera.translation += camera_movement_direction.normalized() * camera_movement_speed * delta_time;
+    }
 
     let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
     let translation_matrix = Mat4::translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
@@ -259,6 +289,7 @@ fn main() -> ExitCode {
     };
 
     let start_time = Instant::now();
+    let mut last_frame_time = start_time;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_down(Key::Key1) {
@@ -275,10 +306,8 @@ fn main() -> ExitCode {
             render_settings.render_mode = RenderMode::WireframeTextured;
         }
 
-        if window.is_key_down(Key::C) {
-            render_settings.backface_cull = true;
-        } else if window.is_key_down(Key::D) {
-            render_settings.backface_cull = false;
+        if window.is_key_pressed(Key::C, KeyRepeat::No) {
+            render_settings.backface_cull = !render_settings.backface_cull;
         }
 
         if window.is_key_down(Key::L) {
@@ -293,7 +322,7 @@ fn main() -> ExitCode {
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
             render_settings.rotate = !render_settings.rotate;
         }
-        if window.is_key_pressed(Key::S, KeyRepeat::No) {
+        if window.is_key_pressed(Key::G, KeyRepeat::No) {
             render_settings.scale = !render_settings.scale;
         }
 
@@ -321,9 +350,13 @@ fn main() -> ExitCode {
             &mut camera,
             &mut mesh,
             render_settings,
+            &mut window,
             start_time.elapsed().as_secs_f32(),
+            last_frame_time.elapsed().as_secs_f32(),
         );
         render(&mut color_buffer, &mut depth_buffer, &mut window, &triangles_to_render, render_settings, &texture);
+
+        last_frame_time = Instant::now();
     }
 
     return ExitCode::from(0);
