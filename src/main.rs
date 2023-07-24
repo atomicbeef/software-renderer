@@ -66,7 +66,7 @@ fn update(
     mesh.rotation = if settings.rotate { mesh.rotation + settings.rotation } else { mesh.rotation };
     mesh.translation.x = if settings.translate { 2.0 * elapsed_time.sin() } else { 0.0 };
     mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
-    mesh.translation.z = 5.0;
+    mesh.translation.z = if settings.translate { 5.0 * elapsed_time.sin() } else { 0.0 };
 
     let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
     let translation_matrix = Mat4::translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
@@ -235,7 +235,7 @@ fn main() -> ExitCode {
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
     
     let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 0.0, -5.0),
         Vec3::new(0.0, 0.0, 1.0),
         Vec3::new(0.0, 1.0, 0.0)
     );
