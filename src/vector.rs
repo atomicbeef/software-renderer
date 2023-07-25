@@ -1,6 +1,6 @@
 use std::ops::{Add, Sub, Mul, Div, AddAssign};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32
@@ -81,6 +81,14 @@ impl Vec2 {
         let magnitude = self.magnitude();
         
         Self { x: self.x / magnitude, y: self.y / magnitude }
+    }
+
+    pub fn normalized_or_zero(&self) -> Self {
+        if *self == Self::default() {
+            Self::default()
+        } else {
+            self.normalized()
+        }
     }
 }
 
@@ -215,9 +223,17 @@ impl Vec3 {
 
         Self { x: self.x / magnitude, y: self.y / magnitude, z: self.z / magnitude }
     }
+
+    pub fn normalized_or_zero(&self) -> Self {
+        if *self == Self::default() {
+            Self::default()
+        } else {
+            self.normalized()
+        }
+    }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec4 {
     pub x: f32,
     pub y: f32,
@@ -250,6 +266,14 @@ impl Vec4 {
             y: self.y / magnitude,
             z: self.z / magnitude,
             w: self.w / magnitude
+        }
+    }
+
+    pub fn normalized_or_zero(&self) -> Self {
+        if *self == Self::default() {
+            Self::default()
+        } else {
+            self.normalized()
         }
     }
 }

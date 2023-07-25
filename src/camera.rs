@@ -2,17 +2,21 @@ use crate::{vector::{Vec3, Vec4}, matrix::Mat4};
 
 pub struct Camera {
     pub translation: Vec3,
-    pub direction: Vec3,
     pub up: Vec3,
+    pub yaw: f32,
+    pub pitch: f32,
 }
 
 impl Camera {
-    pub fn new(pos: Vec3, direction: Vec3, up: Vec3) -> Self {
-        Self { translation: pos, direction, up }
+    pub fn new(pos: Vec3, up: Vec3, yaw: f32, pitch: f32) -> Self {
+        Self { translation: pos, up, yaw, pitch }
     }
 
     pub fn view_matrix(&self) -> Mat4 {
-        let z = self.direction.normalized();
+        let z = Vec3::new(0.0, 0.0, 1.0)
+            .rotated_x(self.pitch)
+            .rotated_y(self.yaw)
+            .normalized();
         let x = self.up.cross(z).normalized();
         let y = z.cross(x).normalized();
 

@@ -32,6 +32,9 @@ const WINDOW_HEIGHT: usize = 768;
 
 const FRAME_RATE: f32 = 60.0;
 
+const CAMERA_MOVEMENT_SPEED: f32 = 3.0;
+const CAMERA_LOOK_SENSITIVITY: f32 = 0.025;
+
 #[derive(Clone, Copy)]
 enum RenderMode {
     Wireframe,
@@ -61,6 +64,7 @@ fn update(
     mesh: &mut Mesh,
     settings: RenderSettings,
     window: &mut Window,
+    mouse_motion: Vec2,
     elapsed_time: f32,
     delta_time: f32,
 ) {
@@ -73,9 +77,11 @@ fn update(
     mesh.translation.y = if settings.translate { 2.0 * elapsed_time.cos() } else { 0.0 };
     mesh.translation.z = if settings.translate { 5.0 * elapsed_time.sin() } else { 0.0 };
 
-    // Update camera translation based on input
-    let camera_movement_speed = 40000.0;
+    // Update camera direction based on input
+    camera.yaw -= mouse_motion.x * CAMERA_LOOK_SENSITIVITY;
+    camera.pitch += mouse_motion.y * CAMERA_LOOK_SENSITIVITY;
 
+    // Update camera translation based on input
     let mut camera_movement_direction = Vec3::default();
     if window.is_key_down(Key::W) {
         camera_movement_direction.z += 1.0;
@@ -96,10 +102,13 @@ fn update(
         camera_movement_direction.y -= 1.0;
     }
 
-    // If the vector is zero, normalization will fail
-    if camera_movement_direction != Vec3::default() {
-        camera.translation += camera_movement_direction.normalized() * camera_movement_speed * delta_time;
-    }
+    // Make movement relative to camera direction
+    let camera_movement_direction_transformed = camera_movement_direction
+        .rotated_x(camera.pitch)
+        .rotated_y(camera.yaw)
+        .normalized_or_zero();
+
+    camera.translation += camera_movement_direction_transformed * CAMERA_MOVEMENT_SPEED * delta_time;
 
     let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
     let translation_matrix = Mat4::translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
@@ -271,8 +280,9 @@ fn main() -> ExitCode {
     
     let mut camera = Camera::new(
         Vec3::new(0.0, 0.0, -5.0),
-        Vec3::new(0.0, 0.0, 1.0),
-        Vec3::new(0.0, 1.0, 0.0)
+        Vec3::new(0.0, 1.0, 0.0),
+        0.0,
+        0.0
     );
 
     let projection_matrix = Mat4::projection(
@@ -292,6 +302,8 @@ fn main() -> ExitCode {
         scale: false,
         flip_uvs_vertically: false,
     };
+
+    let mut last_mouse_pos = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap_or((0.0, 0.0));
 
     let start_time = Instant::now();
     let mut last_frame_time = start_time;
@@ -349,6 +361,13 @@ fn main() -> ExitCode {
             render_settings.flip_uvs_vertically = !render_settings.flip_uvs_vertically;
         }
 
+        let mouse_pos = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or(last_mouse_pos);
+        let mouse_motion = Vec2::new(
+            mouse_pos.0 - last_mouse_pos.0,
+            mouse_pos.1 - last_mouse_pos.1
+        ).normalized_or_zero();
+        last_mouse_pos = mouse_pos;
+
         let delta_time = last_frame_time.elapsed().as_secs_f32();
         last_frame_time = Instant::now();
 
@@ -359,6 +378,7 @@ fn main() -> ExitCode {
             &mut mesh,
             render_settings,
             &mut window,
+            mouse_motion,
             start_time.elapsed().as_secs_f32(),
             delta_time,
         );
