@@ -104,8 +104,8 @@ fn update(
 
     // Make movement relative to camera direction
     let camera_movement_direction_transformed = camera_movement_direction
-        .rotated_x(camera.pitch)
         .rotated_y(camera.yaw)
+        .rotated_x(camera.pitch)
         .normalized_or_zero();
 
     camera.translation += camera_movement_direction_transformed * CAMERA_MOVEMENT_SPEED * delta_time;

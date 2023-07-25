@@ -14,8 +14,8 @@ impl Camera {
 
     pub fn view_matrix(&self) -> Mat4 {
         let z = Vec3::new(0.0, 0.0, 1.0)
-            .rotated_x(self.pitch)
             .rotated_y(self.yaw)
+            .rotated_x(self.pitch)
             .normalized();
         let x = self.up.cross(z).normalized();
         let y = z.cross(x).normalized();
