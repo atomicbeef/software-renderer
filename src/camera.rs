@@ -1,22 +1,54 @@
-use crate::{
-    matrix::Mat4,
-    vector::{Vec3, Vec4},
-};
+use crate::matrix::Mat4;
+use crate::vector::{Vec3, Vec4};
+
+pub struct Plane {
+    pub point: Vec3,
+    pub normal: Vec3,
+}
+
+impl Plane {
+    pub fn new(point: Vec3, normal: Vec3) -> Self {
+        Self { point, normal }
+    }
+}
+
+pub struct ClippingPlanes {
+    pub right: Plane,
+    pub left: Plane,
+    pub top: Plane,
+    pub bottom: Plane,
+    pub far: Plane,
+    pub near: Plane,
+}
 
 pub struct Camera {
     pub translation: Vec3,
     pub up: Vec3,
     pub yaw: f32,
     pub pitch: f32,
+    pub fov: f32,
+    pub z_near: f32,
+    pub z_far: f32,
 }
 
 impl Camera {
-    pub fn new(pos: Vec3, up: Vec3, yaw: f32, pitch: f32) -> Self {
+    pub fn new(
+        translation: Vec3,
+        up: Vec3,
+        yaw: f32,
+        pitch: f32,
+        fov: f32,
+        z_near: f32,
+        z_far: f32,
+    ) -> Self {
         Self {
-            translation: pos,
+            translation,
             up,
             yaw,
             pitch,
+            fov,
+            z_near,
+            z_far,
         }
     }
 
