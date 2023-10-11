@@ -13,7 +13,9 @@ struct FileFormatError;
 
 fn read_vertex(line: &str) -> Result<Vec3, FileFormatError> {
     let mut positions: [f32; 3] = [0.0; 3];
-    
+
+    // A vertex position line should look like this:
+    // v <x> <y> <z>
     for (i, position_str) in line.split_ascii_whitespace()
         .skip(1)
         .enumerate()
@@ -31,6 +33,8 @@ fn read_vertex(line: &str) -> Result<Vec3, FileFormatError> {
 fn read_uv(line: &str) -> Result<Tex2, FileFormatError> {
     let mut uv: [f32; 2] = [0.0; 2];
 
+    // A vertex UV line should look like this:
+    // vt <u> <v>
     for (i, uv_str) in line.split_ascii_whitespace()
         .skip(1)
         .enumerate()
@@ -50,6 +54,8 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
     let mut vertex_indices: [u16; 3] = [0; 3];
     let mut vertex_uvs: [u16; 3] = [0; 3];
 
+    // A face line should look like this:
+    // f <vertex index>/<uv index> <vertex index>/<uv index> <vertex index>/<uv index>
     for (i, indices_str) in line.split_ascii_whitespace()
         .skip(1)
         .enumerate()
