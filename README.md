@@ -1,5 +1,5 @@
 # software-renderer
-A 3D renderer written in Rust. Entirely software based, so no graphics card needed!
+A 3D renderer written in Rust. Entirely software based, so no graphics card needed! This renderer was created as part of [this excellent course](https://pikuma.com/courses/learn-3d-computer-graphics-programming) by Gustavo Pezzi.
 
 # Features
 - OBJ file rendering, with PNG texture support
@@ -47,5 +47,3 @@ A 3D renderer written in Rust. Entirely software based, so no graphics card need
 - Clipping is still a work in progress, so having the model behind the camera can lead to slowdowns or freezes
 - No subpixel rendering
 - There's a bug that sometimes causes the camera to move in unintended directions when rotating the camera around the model
-
-This renderer was created as part of [this excellent course](https://pikuma.com/courses/learn-3d-computer-graphics-programming) by Gustavo Pezzi.
