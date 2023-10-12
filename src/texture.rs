@@ -5,7 +5,7 @@ use std::fs::File;
 
 use crate::color::Color;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Tex2 {
     pub u: f32,
     pub v: f32,
