@@ -3,18 +3,18 @@ use crate::color_buffer::ColorBuffer;
 use crate::depth_buffer::DepthBuffer;
 use crate::texture::Texture;
 use crate::triangle::{Triangle, Vertex};
-use crate::Vec2;
 use crate::vector::Vec4;
+use crate::Vec2;
 
 fn barycentric_weights(a: Vec2, b: Vec2, c: Vec2, p: Vec2) -> (f32, f32, f32) {
     let ac = c - a;
     let ab = b - a;
     let ac_cross_ab = ac.cross(ab);
-    
+
     let pc = c - p;
     let pb = b - p;
     let pc_cross_pb = pc.cross(pb);
-    
+
     let alpha = pc_cross_pb / ac_cross_ab;
 
     let ap = p - a;
@@ -37,7 +37,7 @@ impl ColorBuffer {
             }
         }
     }
-    
+
     pub fn draw_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
         for xi in 0..width {
             for yi in 0..height {
@@ -50,7 +50,11 @@ impl ColorBuffer {
         let dx = x1 as isize - x0 as isize;
         let dy = y1 as isize - y0 as isize;
 
-        let side_length = if dx.abs() >= dy.abs() { dx.abs() } else { dy.abs() };
+        let side_length = if dx.abs() >= dy.abs() {
+            dx.abs()
+        } else {
+            dy.abs()
+        };
 
         let x_inc = dx as f32 / side_length as f32;
         let y_inc = dy as f32 / side_length as f32;
@@ -72,7 +76,7 @@ impl ColorBuffer {
             triangle.points[0].y as usize,
             triangle.points[1].x as usize,
             triangle.points[1].y as usize,
-            color
+            color,
         );
 
         // B -> C
@@ -81,7 +85,7 @@ impl ColorBuffer {
             triangle.points[1].y as usize,
             triangle.points[2].x as usize,
             triangle.points[2].y as usize,
-            color
+            color,
         );
 
         // C -> A
@@ -90,7 +94,7 @@ impl ColorBuffer {
             triangle.points[2].y as usize,
             triangle.points[0].x as usize,
             triangle.points[0].y as usize,
-            color
+            color,
         );
     }
 
@@ -101,14 +105,10 @@ impl ColorBuffer {
         c: Vec4,
         p: Vec2,
         color: Color,
-        depth_buffer: &mut DepthBuffer
+        depth_buffer: &mut DepthBuffer,
     ) {
-        let (alpha, beta, gamma) = barycentric_weights(
-            Vec2::from(a),
-            Vec2::from(b),
-            Vec2::from(c),
-            p
-        );
+        let (alpha, beta, gamma) =
+            barycentric_weights(Vec2::from(a), Vec2::from(b), Vec2::from(c), p);
 
         let interpolated_reciprocal_w = 1.0 / a.w * alpha + 1.0 / b.w * beta + 1.0 / c.w * gamma;
 
@@ -118,26 +118,31 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_filled_triangle(&mut self, triangle: &Triangle, color: Color, depth_buffer: &mut DepthBuffer) {
+    pub fn draw_filled_triangle(
+        &mut self,
+        triangle: &Triangle,
+        color: Color,
+        depth_buffer: &mut DepthBuffer,
+    ) {
         // Floor vertex x and y components to align to pixels and prevent rendering artifacts
         let mut vertices = [
             Vec4::new(
                 triangle.points[0].x.floor(),
                 triangle.points[0].y.floor(),
                 triangle.points[0].z,
-                triangle.points[0].w
+                triangle.points[0].w,
             ),
             Vec4::new(
                 triangle.points[1].x.floor(),
                 triangle.points[1].y.floor(),
                 triangle.points[1].z,
-                triangle.points[1].w
+                triangle.points[1].w,
             ),
             Vec4::new(
                 triangle.points[2].x.floor(),
                 triangle.points[2].y.floor(),
                 triangle.points[2].z,
-                triangle.points[2].w
+                triangle.points[2].w,
             ),
         ];
 
@@ -171,12 +176,12 @@ impl ColorBuffer {
                         vertices[2],
                         Vec2::new(x as f32, y as f32),
                         color,
-                        depth_buffer
+                        depth_buffer,
                     );
                 }
             }
         }
-        
+
         // Render flat top triangle
         let flat_top_inverse_slope_1 = if vertices[2].y - vertices[1].y != 0.0 {
             (vertices[2].x - vertices[1].x) / (vertices[2].y - vertices[1].y).abs()
@@ -205,7 +210,7 @@ impl ColorBuffer {
                         vertices[2],
                         Vec2::new(x as f32, y as f32),
                         color,
-                        depth_buffer
+                        depth_buffer,
                     );
                 }
             }
@@ -220,17 +225,16 @@ impl ColorBuffer {
         p: Vec2,
         texture: &Texture,
         depth_buffer: &mut DepthBuffer,
-        flip_v: bool
+        flip_v: bool,
     ) {
-        let (alpha, beta, gamma) = barycentric_weights(
-            Vec2::from(a.pos),
-            Vec2::from(b.pos),
-            Vec2::from(c.pos),
-            p
-        );
+        let (alpha, beta, gamma) =
+            barycentric_weights(Vec2::from(a.pos), Vec2::from(b.pos), Vec2::from(c.pos), p);
 
-        let interpolated_reciprocal_w = 1.0 / a.pos.w * alpha + 1.0 / b.pos.w * beta + 1.0 / c.pos.w * gamma;
-        let mut p_uv = ((a.uv / a.pos.w * alpha) + (b.uv / b.pos.w * beta) + (c.uv / c.pos.w * gamma)) / interpolated_reciprocal_w;
+        let interpolated_reciprocal_w =
+            1.0 / a.pos.w * alpha + 1.0 / b.pos.w * beta + 1.0 / c.pos.w * gamma;
+        let mut p_uv =
+            ((a.uv / a.pos.w * alpha) + (b.uv / b.pos.w * beta) + (c.uv / c.pos.w * gamma))
+                / interpolated_reciprocal_w;
 
         if flip_v {
             p_uv.v = 1.0 - p_uv.v;
@@ -249,7 +253,7 @@ impl ColorBuffer {
         triangle: &Triangle,
         texture: &Texture,
         depth_buffer: &mut DepthBuffer,
-        flip_v: bool
+        flip_v: bool,
     ) {
         // Floor vertex x and y components to align to pixels and prevent rendering artifacts
         let mut vertices = [
@@ -260,7 +264,7 @@ impl ColorBuffer {
                     triangle.points[0].z,
                     triangle.points[0].w,
                 ),
-                uv: triangle.tex_coords[0]
+                uv: triangle.tex_coords[0],
             },
             Vertex {
                 pos: Vec4::new(
@@ -269,7 +273,7 @@ impl ColorBuffer {
                     triangle.points[1].z,
                     triangle.points[1].w,
                 ),
-                uv: triangle.tex_coords[1]
+                uv: triangle.tex_coords[1],
             },
             Vertex {
                 pos: Vec4::new(
@@ -278,7 +282,7 @@ impl ColorBuffer {
                     triangle.points[2].z,
                     triangle.points[2].w,
                 ),
-                uv: triangle.tex_coords[2]
+                uv: triangle.tex_coords[2],
             },
         ];
 
@@ -299,8 +303,10 @@ impl ColorBuffer {
 
         if vertices[1].pos.y - vertices[0].pos.y != 0.0 {
             for y in vertices[0].pos.y as usize..=vertices[1].pos.y as usize {
-                let x0 = vertices[1].pos.x + (y as f32 - vertices[1].pos.y) * flat_bottom_inverse_slope_1;
-                let x1 = vertices[0].pos.x + (y as f32 - vertices[0].pos.y) * flat_bottom_inverse_slope_2;
+                let x0 = vertices[1].pos.x
+                    + (y as f32 - vertices[1].pos.y) * flat_bottom_inverse_slope_1;
+                let x1 = vertices[0].pos.x
+                    + (y as f32 - vertices[0].pos.y) * flat_bottom_inverse_slope_2;
 
                 let x_start = if x0 < x1 { x0 } else { x1 };
                 let x_end = if x1 > x0 { x1 } else { x0 };
@@ -313,12 +319,12 @@ impl ColorBuffer {
                         Vec2::new(x as f32, y as f32),
                         texture,
                         depth_buffer,
-                        flip_v
+                        flip_v,
                     )
                 }
             }
         }
-        
+
         // Render flat top triangle
         let flat_top_inverse_slope_1 = if vertices[2].pos.y - vertices[1].pos.y != 0.0 {
             (vertices[2].pos.x - vertices[1].pos.x) / (vertices[2].pos.y - vertices[1].pos.y).abs()
@@ -334,8 +340,10 @@ impl ColorBuffer {
 
         if vertices[2].pos.y - vertices[1].pos.y != 0.0 {
             for y in vertices[1].pos.y as usize..=vertices[2].pos.y as usize {
-                let x0 = vertices[1].pos.x + (y as f32 - vertices[1].pos.y) * flat_top_inverse_slope_1;
-                let x1 = vertices[0].pos.x + (y as f32 - vertices[0].pos.y) * flat_top_inverse_slope_2;
+                let x0 =
+                    vertices[1].pos.x + (y as f32 - vertices[1].pos.y) * flat_top_inverse_slope_1;
+                let x1 =
+                    vertices[0].pos.x + (y as f32 - vertices[0].pos.y) * flat_top_inverse_slope_2;
 
                 let x_start = if x0 < x1 { x0 as usize } else { x1 as usize };
                 let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
@@ -348,7 +356,7 @@ impl ColorBuffer {
                         Vec2::new(x as f32, y as f32),
                         texture,
                         depth_buffer,
-                        flip_v
+                        flip_v,
                     )
                 }
             }

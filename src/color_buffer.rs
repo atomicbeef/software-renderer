@@ -3,7 +3,7 @@ use crate::color::Color;
 pub struct ColorBuffer {
     buffer: Vec<u32>,
     width: usize,
-    height: usize
+    height: usize,
 }
 
 impl ColorBuffer {
@@ -11,15 +11,21 @@ impl ColorBuffer {
         Self {
             buffer: vec![0; width * height],
             width,
-            height
+            height,
         }
     }
 
-    pub fn width(&self) -> usize { self.width }
-    
-    pub fn height(&self) -> usize { self.height }
+    pub fn width(&self) -> usize {
+        self.width
+    }
 
-    pub fn buffer(&self) -> &[u32] { &self.buffer }
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn buffer(&self) -> &[u32] {
+        &self.buffer
+    }
 
     pub fn clear(&mut self, color: Color) {
         self.buffer.fill(color.into());

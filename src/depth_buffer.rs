@@ -6,7 +6,11 @@ pub struct DepthBuffer {
 
 impl DepthBuffer {
     pub fn new(width: usize, height: usize) -> Self {
-        Self { buffer: vec![1.0; width * height], width, height }
+        Self {
+            buffer: vec![1.0; width * height],
+            width,
+            height,
+        }
     }
 
     pub fn clear(&mut self, depth: f32) {
@@ -14,7 +18,7 @@ impl DepthBuffer {
     }
 
     pub fn get(&self, x: usize, y: usize) -> f32 {
-        if x < self. width && y < self.height {
+        if x < self.width && y < self.height {
             self.buffer[self.width * y + x]
         } else {
             1.0

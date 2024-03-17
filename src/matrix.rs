@@ -15,7 +15,7 @@ impl Mat4 {
         x: Vec4::new(1.0, 0.0, 0.0, 0.0),
         y: Vec4::new(0.0, 1.0, 0.0, 0.0),
         z: Vec4::new(0.0, 0.0, 1.0, 0.0),
-        w: Vec4::new(0.0, 0.0, 0.0, 1.0)
+        w: Vec4::new(0.0, 0.0, 0.0, 1.0),
     };
 
     pub const fn new(x: Vec4, y: Vec4, z: Vec4, w: Vec4) -> Self {
@@ -80,13 +80,13 @@ impl Mat4 {
             Vec4::new(aspect * (fov / 2.0).atan(), 0.0, 0.0, 0.0),
             Vec4::new(0.0, (fov / 2.0).atan(), 0.0, 0.0),
             Vec4::new(0.0, 0.0, zfar / (zfar - znear), 1.0),
-            Vec4::new(0.0, 0.0, -zfar * znear / (zfar - znear), 0.0)
+            Vec4::new(0.0, 0.0, -zfar * znear / (zfar - znear), 0.0),
         )
     }
 
     pub fn project_vec4(&self, vector: Vec4) -> Vec4 {
         let mut multiplied = self * vector;
-        
+
         if multiplied.w != 0.0 {
             multiplied.x /= multiplied.w;
             multiplied.y /= multiplied.w;
@@ -105,7 +105,7 @@ impl Mul<Vec4> for Mat4 {
             Vec4::new(self.x.x, self.y.x, self.z.x, self.w.x).dot(rhs),
             Vec4::new(self.x.y, self.y.y, self.z.y, self.w.y).dot(rhs),
             Vec4::new(self.x.z, self.y.z, self.z.z, self.w.z).dot(rhs),
-            Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs)
+            Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs),
         )
     }
 }
@@ -118,7 +118,7 @@ impl Mul<Vec4> for &Mat4 {
             Vec4::new(self.x.x, self.y.x, self.z.x, self.w.x).dot(rhs),
             Vec4::new(self.x.y, self.y.y, self.z.y, self.w.y).dot(rhs),
             Vec4::new(self.x.z, self.y.z, self.z.z, self.w.z).dot(rhs),
-            Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs)
+            Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs),
         )
     }
 }
@@ -132,25 +132,25 @@ impl Mul<Mat4> for Mat4 {
                 Vec4::new(self.x.x, self.y.x, self.z.x, self.w.x).dot(rhs.x),
                 Vec4::new(self.x.y, self.y.y, self.z.y, self.w.y).dot(rhs.x),
                 Vec4::new(self.x.z, self.y.z, self.z.z, self.w.z).dot(rhs.x),
-                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.x)
+                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.x),
             ),
             Vec4::new(
                 Vec4::new(self.x.x, self.y.x, self.z.x, self.w.x).dot(rhs.y),
                 Vec4::new(self.x.y, self.y.y, self.z.y, self.w.y).dot(rhs.y),
                 Vec4::new(self.x.z, self.y.z, self.z.z, self.w.z).dot(rhs.y),
-                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.y)
+                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.y),
             ),
             Vec4::new(
                 Vec4::new(self.x.x, self.y.x, self.z.x, self.w.x).dot(rhs.z),
                 Vec4::new(self.x.y, self.y.y, self.z.y, self.w.y).dot(rhs.z),
                 Vec4::new(self.x.z, self.y.z, self.z.z, self.w.z).dot(rhs.z),
-                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.z)
+                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.z),
             ),
             Vec4::new(
                 Vec4::new(self.x.x, self.y.x, self.z.x, self.w.x).dot(rhs.w),
                 Vec4::new(self.x.y, self.y.y, self.z.y, self.w.y).dot(rhs.w),
                 Vec4::new(self.x.z, self.y.z, self.z.z, self.w.z).dot(rhs.w),
-                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.w)
+                Vec4::new(self.x.w, self.y.w, self.z.w, self.w.w).dot(rhs.w),
             ),
         )
     }
@@ -186,7 +186,7 @@ mod tests {
             Vec4::new(1.0, 2.0, 3.0, 4.0),
             Vec4::new(5.0, 6.0, 7.0, 8.0),
             Vec4::new(9.0, 10.0, 11.0, 12.0),
-            Vec4::new(13.0, 14.0, 15.0, 16.0)
+            Vec4::new(13.0, 14.0, 15.0, 16.0),
         );
         let b = Vec4::new(5.0, 1.0, 2.0, 0.0);
         let c = a * b;
@@ -209,11 +209,14 @@ mod tests {
         let b = Mat4::scale(1.0, 2.0, 3.0);
         let c = a * b;
 
-        assert!(eq_mat4(c, Mat4::new(
-            Vec4::new(1.0, 0.0, 0.0, 0.0),
-            Vec4::new(0.0, 2.0, 0.0, 0.0),
-            Vec4::new(0.0, 0.0, 3.0, 0.0),
-            Vec4::new(1.0, 0.0, 5.0, 1.0)
-        )));
+        assert!(eq_mat4(
+            c,
+            Mat4::new(
+                Vec4::new(1.0, 0.0, 0.0, 0.0),
+                Vec4::new(0.0, 2.0, 0.0, 0.0),
+                Vec4::new(0.0, 0.0, 3.0, 0.0),
+                Vec4::new(1.0, 0.0, 5.0, 1.0)
+            )
+        ));
     }
 }

@@ -1,6 +1,6 @@
-use std::io::{BufReader, BufRead};
-use std::path::Path;
 use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::Path;
 
 use crate::color::Color;
 use crate::mesh::Mesh;
@@ -16,14 +16,17 @@ fn read_vertex(line: &str) -> Result<Vec3, FileFormatError> {
 
     // A vertex position line should look like this:
     // v <x> <y> <z>
-    for (i, position_str) in line.split_ascii_whitespace()
+    for (i, position_str) in line
+        .split_ascii_whitespace()
         .skip(1)
         .enumerate()
         .take_while(|(i, _)| *i < 3)
     {
         match position_str.parse::<f32>() {
-            Ok(pos) => { positions[i] = pos; },
-            Err(_) => { return Err(FileFormatError) }
+            Ok(pos) => {
+                positions[i] = pos;
+            }
+            Err(_) => return Err(FileFormatError),
         }
     }
 
@@ -35,14 +38,15 @@ fn read_uv(line: &str) -> Result<Tex2, FileFormatError> {
 
     // A vertex UV line should look like this:
     // vt <u> <v>
-    for (i, uv_str) in line.split_ascii_whitespace()
+    for (i, uv_str) in line
+        .split_ascii_whitespace()
         .skip(1)
         .enumerate()
         .take_while(|(i, _)| *i < 2)
     {
         match uv_str.parse::<f32>() {
-            Ok(tex_coord) => { uv[i] = tex_coord },
-            Err(_) => { return Err(FileFormatError) }
+            Ok(tex_coord) => uv[i] = tex_coord,
+            Err(_) => return Err(FileFormatError),
         }
     }
 
@@ -56,13 +60,14 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
 
     // A face line should look like this:
     // f <vertex index>/<uv index> <vertex index>/<uv index> <vertex index>/<uv index>
-    for (i, indices_str) in line.split_ascii_whitespace()
+    for (i, indices_str) in line
+        .split_ascii_whitespace()
         .skip(1)
         .enumerate()
         .take_while(|(i, _)| *i < 3)
     {
         let mut vertex_index_str = indices_str.split('/');
-        
+
         // Vertex positions
         match vertex_index_str.next().unwrap().parse::<i32>() {
             Ok(vertex_index) => {
@@ -72,8 +77,10 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
                 } else {
                     vertex_indices[i] = num_vertices - vertex_index as u16 - 1;
                 }
-            },
-            Err(_) => { return Err(FileFormatError); }
+            }
+            Err(_) => {
+                return Err(FileFormatError);
+            }
         }
 
         // Vertex UVs
@@ -85,8 +92,10 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
                     } else {
                         vertex_uvs[i] = num_vertex_uvs - uv_index as u16 - 1;
                     }
-                },
-                Err(_) => { return Err(FileFormatError); }
+                }
+                Err(_) => {
+                    return Err(FileFormatError);
+                }
             }
         }
     }
@@ -102,7 +111,7 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
         vertex_uvs[0],
         vertex_uvs[1],
         vertex_uvs[2],
-        Color::new(0, 0xFF, 0xFF)
+        Color::new(0, 0xFF, 0xFF),
     ))
 }
 
@@ -118,10 +127,12 @@ impl Mesh {
             let line = potential_line.expect("Could not read line from OBJ file!");
 
             if line.starts_with("v ") {
-                let vertex = read_vertex(&line).expect(format!("Could not read vertex from line {}!", &line).as_str());
+                let vertex = read_vertex(&line)
+                    .expect(format!("Could not read vertex from line {}!", &line).as_str());
                 vertices.push(vertex);
             } else if line.starts_with("vt ") {
-                let uv = read_uv(&line).expect(format!("Could not read vertex UV from line {}!", &line).as_str());
+                let uv = read_uv(&line)
+                    .expect(format!("Could not read vertex UV from line {}!", &line).as_str());
                 vertex_uvs.push(uv);
             } else if line.starts_with("f ") {
                 let face = read_face(&line, vertices.len() as u16, vertex_uvs.len() as u16)
@@ -136,7 +147,7 @@ impl Mesh {
             faces,
             rotation: Vec3::default(),
             scale: Vec3::splat(1.0),
-            translation: Vec3::default()
+            translation: Vec3::default(),
         }
     }
 }
@@ -145,105 +156,91 @@ impl Mesh {
 mod tests {
     use super::*;
 
-    fn assert_face_attributes(face: &Face, expected_vertex_indices: [u16; 3], expected_uv_indices: [u16; 3]) {
-        assert_eq!(face.a, expected_vertex_indices[0], "Face vertex index A is not correct");
-        assert_eq!(face.b, expected_vertex_indices[1], "Face vertex index B is not correct");
-        assert_eq!(face.c, expected_vertex_indices[2], "Face vertex index C is not correct");
-        assert_eq!(face.a_uv, expected_uv_indices[0], "Face vertex UV index A is not correct");
-        assert_eq!(face.b_uv, expected_uv_indices[1], "Face vertex UV index B is not correct");
-        assert_eq!(face.c_uv, expected_uv_indices[2], "Face vertex UV index C is not correct");
+    fn assert_face_attributes(
+        face: &Face,
+        expected_vertex_indices: [u16; 3],
+        expected_uv_indices: [u16; 3],
+    ) {
+        assert_eq!(
+            face.a, expected_vertex_indices[0],
+            "Face vertex index A is not correct"
+        );
+        assert_eq!(
+            face.b, expected_vertex_indices[1],
+            "Face vertex index B is not correct"
+        );
+        assert_eq!(
+            face.c, expected_vertex_indices[2],
+            "Face vertex index C is not correct"
+        );
+        assert_eq!(
+            face.a_uv, expected_uv_indices[0],
+            "Face vertex UV index A is not correct"
+        );
+        assert_eq!(
+            face.b_uv, expected_uv_indices[1],
+            "Face vertex UV index B is not correct"
+        );
+        assert_eq!(
+            face.c_uv, expected_uv_indices[2],
+            "Face vertex UV index C is not correct"
+        );
     }
 
     #[test]
     fn model_can_be_read() {
         let model = Mesh::from_obj(Path::new("assets/cube.obj"));
 
-        assert_eq!(model.vertices, vec![
-            Vec3::new(-1.0, -1.0, 1.0),
-            Vec3::new(1.0, -1.0, 1.0),
-            Vec3::new(-1.0, 1.0, 1.0),
-            Vec3::new(1.0, 1.0, 1.0),
-            Vec3::new(-1.0, 1.0, -1.0),
-            Vec3::new(1.0, 1.0, -1.0),
-            Vec3::new(-1.0, -1.0, -1.0),
-            Vec3::new(1.0, -1.0, -1.0),
-        ], "Vertex positions are not correct");
+        assert_eq!(
+            model.vertices,
+            vec![
+                Vec3::new(-1.0, -1.0, 1.0),
+                Vec3::new(1.0, -1.0, 1.0),
+                Vec3::new(-1.0, 1.0, 1.0),
+                Vec3::new(1.0, 1.0, 1.0),
+                Vec3::new(-1.0, 1.0, -1.0),
+                Vec3::new(1.0, 1.0, -1.0),
+                Vec3::new(-1.0, -1.0, -1.0),
+                Vec3::new(1.0, -1.0, -1.0),
+            ],
+            "Vertex positions are not correct"
+        );
 
         // UV coordinates are flipped vertically
-        assert_eq!(model.vertex_uvs, vec![
-            Tex2::new(1.0, 1.0),
-            Tex2::new(0.0, 1.0),
-            Tex2::new(1.0, 0.0),
-            Tex2::new(0.0, 0.0),
-        ], "Texture coordinates are not correct");
+        assert_eq!(
+            model.vertex_uvs,
+            vec![
+                Tex2::new(1.0, 1.0),
+                Tex2::new(0.0, 1.0),
+                Tex2::new(1.0, 0.0),
+                Tex2::new(0.0, 0.0),
+            ],
+            "Texture coordinates are not correct"
+        );
 
-        assert_eq!(model.faces.len(), 12, "Model does not have the correct number of faces");
-        
+        assert_eq!(
+            model.faces.len(),
+            12,
+            "Model does not have the correct number of faces"
+        );
+
         // Indices are 0-based in the renderer, but 1-based in the OBJ file
-        assert_face_attributes(
-            &model.faces[0],
-            [0, 1, 2],
-            [0, 1, 2]
-        );
-        assert_face_attributes(
-            &model.faces[1],
-            [2, 1, 3],
-            [2, 1, 3]
-        );
+        assert_face_attributes(&model.faces[0], [0, 1, 2], [0, 1, 2]);
+        assert_face_attributes(&model.faces[1], [2, 1, 3], [2, 1, 3]);
 
-        assert_face_attributes(
-            &model.faces[2],
-            [2, 3, 4],
-            [0, 1, 2]
-        );
-        assert_face_attributes(
-            &model.faces[3],
-            [4, 3, 5],
-            [2, 1, 3]
-        );
+        assert_face_attributes(&model.faces[2], [2, 3, 4], [0, 1, 2]);
+        assert_face_attributes(&model.faces[3], [4, 3, 5], [2, 1, 3]);
 
-        assert_face_attributes(
-            &model.faces[4],
-            [4, 5, 6],
-            [3, 2, 1]
-        );
-        assert_face_attributes(
-            &model.faces[5],
-            [6, 5, 7],
-            [1, 2, 0]
-        );
+        assert_face_attributes(&model.faces[4], [4, 5, 6], [3, 2, 1]);
+        assert_face_attributes(&model.faces[5], [6, 5, 7], [1, 2, 0]);
 
-        assert_face_attributes(
-            &model.faces[6],
-            [6, 7, 0],
-            [0, 1, 2]
-        );
-        assert_face_attributes(
-            &model.faces[7],
-            [0, 7, 1],
-            [2, 1, 3]
-        );
+        assert_face_attributes(&model.faces[6], [6, 7, 0], [0, 1, 2]);
+        assert_face_attributes(&model.faces[7], [0, 7, 1], [2, 1, 3]);
 
-        assert_face_attributes(
-            &model.faces[8],
-            [1, 7, 3],
-            [0, 1, 2]
-        );
-        assert_face_attributes(
-            &model.faces[9],
-            [3, 7, 5],
-            [2, 1, 3]
-        );
+        assert_face_attributes(&model.faces[8], [1, 7, 3], [0, 1, 2]);
+        assert_face_attributes(&model.faces[9], [3, 7, 5], [2, 1, 3]);
 
-        assert_face_attributes(
-            &model.faces[10],
-            [6, 0, 4],
-            [0, 1, 2]
-        );
-        assert_face_attributes(
-            &model.faces[11],
-            [4, 0, 2],
-            [2, 1, 3]
-        );
+        assert_face_attributes(&model.faces[10], [6, 0, 4], [0, 1, 2]);
+        assert_face_attributes(&model.faces[11], [4, 0, 2], [2, 1, 3]);
     }
 }

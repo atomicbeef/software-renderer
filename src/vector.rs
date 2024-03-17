@@ -1,9 +1,9 @@
-use std::ops::{Add, Sub, Mul, Div, AddAssign};
+use std::ops::{Add, AddAssign, Div, Mul, Sub};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
-    pub y: f32
+    pub y: f32,
 }
 
 impl Default for Vec2 {
@@ -53,12 +53,15 @@ impl Div<f32> for Vec2 {
 }
 
 impl Vec2 {
-    pub const fn new(x: f32, y: f32) -> Self { 
+    pub const fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
 
     pub fn floor(&self) -> Self {
-        Self { x: self.x.floor(), y: self.y.floor() }
+        Self {
+            x: self.x.floor(),
+            y: self.y.floor(),
+        }
     }
 
     pub const fn splat(val: f32) -> Self {
@@ -79,8 +82,11 @@ impl Vec2 {
 
     pub fn normalized(&self) -> Self {
         let magnitude = self.magnitude();
-        
-        Self { x: self.x / magnitude, y: self.y / magnitude }
+
+        Self {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+        }
     }
 
     pub fn normalized_or_zero(&self) -> Self {
@@ -102,12 +108,16 @@ impl From<Vec4> for Vec2 {
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
-    pub z: f32
+    pub z: f32,
 }
 
 impl Default for Vec3 {
     fn default() -> Self {
-        Vec3 { x: 0.0, y: 0.0, z: 0.0 }
+        Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
     }
 }
 
@@ -164,18 +174,22 @@ impl From<Vec4> for Vec3 {
         Self {
             x: value.x,
             y: value.y,
-            z: value.z
+            z: value.z,
         }
     }
 }
 
 impl Vec3 {
-    pub const fn new(x: f32, y: f32, z: f32) -> Self { 
+    pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
 
     pub const fn splat(val: f32) -> Self {
-        Self { x: val, y: val, z: val }
+        Self {
+            x: val,
+            y: val,
+            z: val,
+        }
     }
 
     pub fn magnitude(&self) -> f32 {
@@ -186,7 +200,7 @@ impl Vec3 {
         Vec3::new(
             self.y * b.z - self.z * b.y,
             self.z * b.x - self.x * b.z,
-            self.x * b.y - self.y * b.x 
+            self.x * b.y - self.y * b.x,
         )
     }
 
@@ -198,7 +212,7 @@ impl Vec3 {
         Self {
             x: self.x,
             y: self.y * angle.cos() - self.z * angle.sin(),
-            z: self.y * angle.sin() + self.z * angle.cos()
+            z: self.y * angle.sin() + self.z * angle.cos(),
         }
     }
 
@@ -206,7 +220,7 @@ impl Vec3 {
         Self {
             x: self.x * angle.cos() - self.z * angle.sin(),
             y: self.y,
-            z: self.x * angle.sin() + self.z * angle.cos()
+            z: self.x * angle.sin() + self.z * angle.cos(),
         }
     }
 
@@ -214,14 +228,18 @@ impl Vec3 {
         Self {
             x: self.x * angle.cos() - self.y * angle.sin(),
             y: self.x * angle.sin() + self.y * angle.cos(),
-            z: self.z
+            z: self.z,
         }
     }
 
     pub fn normalized(&self) -> Self {
         let magnitude = self.magnitude();
 
-        Self { x: self.x / magnitude, y: self.y / magnitude, z: self.z / magnitude }
+        Self {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+            z: self.z / magnitude,
+        }
     }
 
     pub fn normalized_or_zero(&self) -> Self {
@@ -238,16 +256,21 @@ pub struct Vec4 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    pub w: f32
+    pub w: f32,
 }
 
 impl Vec4 {
-    pub const fn new(x: f32, y: f32, z: f32, w: f32) -> Self { 
+    pub const fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Self { x, y, z, w }
     }
 
     pub const fn splat(val: f32) -> Self {
-        Self { x: val, y: val, z: val, w: val }
+        Self {
+            x: val,
+            y: val,
+            z: val,
+            w: val,
+        }
     }
 
     pub fn magnitude(&self) -> f32 {
@@ -265,7 +288,7 @@ impl Vec4 {
             x: self.x / magnitude,
             y: self.y / magnitude,
             z: self.z / magnitude,
-            w: self.w / magnitude
+            w: self.w / magnitude,
         }
     }
 
@@ -286,7 +309,12 @@ impl From<Vec3> for Vec4 {
 
 impl Default for Vec4 {
     fn default() -> Self {
-        Vec4 { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }
+        Vec4 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        }
     }
 }
 
@@ -294,6 +322,11 @@ impl Add<Vec4> for Vec4 {
     type Output = Vec4;
 
     fn add(self, rhs: Vec4) -> Self::Output {
-        Vec4::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z, self.w + rhs.w)
+        Vec4::new(
+            self.x + rhs.x,
+            self.y + rhs.y,
+            self.z + rhs.z,
+            self.w + rhs.w,
+        )
     }
 }
