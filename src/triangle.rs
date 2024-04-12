@@ -40,7 +40,7 @@ pub struct Vertex {
     pub uv: Tex2,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Triangle {
     pub points: [Vec4; 3],
     pub tex_coords: [Tex2; 3],

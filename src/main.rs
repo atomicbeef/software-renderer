@@ -17,12 +17,15 @@ mod drawing;
 mod matrix;
 mod mesh;
 mod obj;
+mod plane;
+mod polygon;
 mod texture;
 mod triangle;
 mod vector;
 
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
+use polygon::Polygon;
 use texture::Texture;
 use triangle::Triangle;
 use vector::{Vec2, Vec3, Vec4};
@@ -184,31 +187,48 @@ fn update(
         let camera_transformed_vertices =
             world_transformed_vertices.map(|vertex| camera_matrix * vertex);
 
-        // Project
-        let projected_vertices = camera_transformed_vertices.map(|vertex| {
-            let mut projected = projection_matrix.project_vec4(vertex);
+        // Clip
+        let polygon = Polygon::from(&camera_transformed_vertices.map(|vertex| Vec3::from(vertex)));
 
-            // Scale and translate into view
-            projected.x *= WINDOW_WIDTH as f32 / 1.0;
-            projected.y *= WINDOW_HEIGHT as f32 / -1.0;
+        let clipping_planes = camera.clipping_planes();
 
-            projected.x += WINDOW_WIDTH as f32 / 2.0;
-            projected.y += WINDOW_HEIGHT as f32 / 2.0;
+        let polygon = clipping_planes.right.clip_polygon(&polygon);
+        let polygon = clipping_planes.left.clip_polygon(&polygon);
+        let polygon = clipping_planes.top.clip_polygon(&polygon);
+        let polygon = clipping_planes.bottom.clip_polygon(&polygon);
+        let polygon = clipping_planes.far.clip_polygon(&polygon);
+        let polygon = clipping_planes.near.clip_polygon(&polygon);
 
-            projected
-        });
+        let clipped_triangles = polygon.triangulate();
 
-        let triangle = Triangle::new(
-            projected_vertices[0],
-            projected_vertices[1],
-            projected_vertices[2],
-            mesh.vertex_uvs[face.a_uv as usize],
-            mesh.vertex_uvs[face.b_uv as usize],
-            mesh.vertex_uvs[face.c_uv as usize],
-            triangle_color,
-        );
+        for triangle in clipped_triangles {
+            // Project
+            let projected_vertices = triangle.map(|vertex| {
+                let vertex = Vec4::from(vertex);
+                let mut projected = projection_matrix.project_vec4(vertex);
 
-        triangles_to_render.push(triangle);
+                // Scale and translate into view
+                projected.x *= WINDOW_WIDTH as f32 / 1.0;
+                projected.y *= WINDOW_HEIGHT as f32 / -1.0;
+
+                projected.x += WINDOW_WIDTH as f32 / 2.0;
+                projected.y += WINDOW_HEIGHT as f32 / 2.0;
+
+                projected
+            });
+
+            let triangle = Triangle::new(
+                projected_vertices[0],
+                projected_vertices[1],
+                projected_vertices[2],
+                mesh.vertex_uvs[face.a_uv as usize],
+                mesh.vertex_uvs[face.b_uv as usize],
+                mesh.vertex_uvs[face.c_uv as usize],
+                triangle_color,
+            );
+
+            triangles_to_render.push(triangle);
+        }
     }
 }
 

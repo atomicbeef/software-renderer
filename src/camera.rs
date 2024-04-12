@@ -1,16 +1,6 @@
 use crate::matrix::Mat4;
+use crate::plane::Plane;
 use crate::vector::{Vec3, Vec4};
-
-pub struct Plane {
-    pub point: Vec3,
-    pub normal: Vec3,
-}
-
-impl Plane {
-    pub fn new(point: Vec3, normal: Vec3) -> Self {
-        Self { point, normal }
-    }
-}
 
 pub struct ClippingPlanes {
     pub right: Plane,
@@ -71,5 +61,30 @@ impl Camera {
                 1.0,
             ),
         )
+    }
+
+    pub fn clipping_planes(&self) -> ClippingPlanes {
+        let half_fov = self.fov / 2.0;
+
+        ClippingPlanes {
+            right: Plane::new(
+                Vec3::default(),
+                Vec3::new(-half_fov.cos(), 0.0, half_fov.sin()),
+            ),
+            left: Plane::new(
+                Vec3::default(),
+                Vec3::new(half_fov.cos(), 0.0, half_fov.sin()),
+            ),
+            top: Plane::new(
+                Vec3::default(),
+                Vec3::new(0.0, -half_fov.cos(), half_fov.sin()),
+            ),
+            bottom: Plane::new(
+                Vec3::default(),
+                Vec3::new(0.0, half_fov.cos(), half_fov.sin()),
+            ),
+            far: Plane::new(Vec3::new(0.0, 0.0, self.z_far), Vec3::new(0.0, 0.0, -1.0)),
+            near: Plane::new(Vec3::new(0.0, 0.0, self.z_near), Vec3::new(0.0, 0.0, 1.0)),
+        }
     }
 }
