@@ -2,6 +2,7 @@ use std::ops::{Mul, MulAssign};
 
 use crate::vector::Vec4;
 
+/// Column major format
 #[derive(Clone, Copy, Debug)]
 pub struct Mat4 {
     x: Vec4,
@@ -77,8 +78,8 @@ impl Mat4 {
 
     pub fn projection(fov: f32, aspect: f32, znear: f32, zfar: f32) -> Self {
         Self::new(
-            Vec4::new(aspect * (fov / 2.0).atan(), 0.0, 0.0, 0.0),
-            Vec4::new(0.0, (fov / 2.0).atan(), 0.0, 0.0),
+            Vec4::new(aspect * 1.0 / (fov / 2.0).tan(), 0.0, 0.0, 0.0),
+            Vec4::new(0.0, 1.0 / (fov / 2.0).tan(), 0.0, 0.0),
             Vec4::new(0.0, 0.0, zfar / (zfar - znear), 1.0),
             Vec4::new(0.0, 0.0, -zfar * znear / (zfar - znear), 0.0),
         )

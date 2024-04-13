@@ -356,7 +356,7 @@ fn main() -> ExitCode {
     );
 
     let projection_matrix = Mat4::projection(
-        std::f32::consts::FRAC_PI_3,
+        std::f32::consts::FRAC_PI_2,
         WINDOW_HEIGHT as f32 / WINDOW_WIDTH as f32,
         0.1,
         100.0,
