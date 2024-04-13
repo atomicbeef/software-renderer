@@ -190,7 +190,7 @@ fn update(
         // Clip
         let polygon = Polygon::from(&camera_transformed_vertices.map(|vertex| Vec3::from(vertex)));
 
-        let clipping_planes = camera.clipping_planes();
+        let clipping_planes = camera.clipping_planes(WINDOW_WIDTH as f32 / WINDOW_HEIGHT as f32);
 
         let polygon = clipping_planes.right.clip_polygon(&polygon);
         let polygon = clipping_planes.left.clip_polygon(&polygon);

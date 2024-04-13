@@ -63,25 +63,26 @@ impl Camera {
         )
     }
 
-    pub fn clipping_planes(&self) -> ClippingPlanes {
-        let half_fov = self.fov / 2.0;
+    pub fn clipping_planes(&self, horizontal_aspect_ratio: f32) -> ClippingPlanes {
+        let half_fov_vertical = self.fov / 2.0;
+        let half_fov_horizontal = 2.0 * (half_fov_vertical.tan() * horizontal_aspect_ratio).atan();
 
         ClippingPlanes {
             right: Plane::new(
                 Vec3::default(),
-                Vec3::new(-half_fov.cos(), 0.0, half_fov.sin()),
+                Vec3::new(-half_fov_horizontal.cos(), 0.0, half_fov_horizontal.sin()),
             ),
             left: Plane::new(
                 Vec3::default(),
-                Vec3::new(half_fov.cos(), 0.0, half_fov.sin()),
+                Vec3::new(half_fov_horizontal.cos(), 0.0, half_fov_horizontal.sin()),
             ),
             top: Plane::new(
                 Vec3::default(),
-                Vec3::new(0.0, -half_fov.cos(), half_fov.sin()),
+                Vec3::new(0.0, -half_fov_vertical.cos(), half_fov_vertical.sin()),
             ),
             bottom: Plane::new(
                 Vec3::default(),
-                Vec3::new(0.0, half_fov.cos(), half_fov.sin()),
+                Vec3::new(0.0, half_fov_vertical.cos(), half_fov_vertical.sin()),
             ),
             far: Plane::new(Vec3::new(0.0, 0.0, self.z_far), Vec3::new(0.0, 0.0, -1.0)),
             near: Plane::new(Vec3::new(0.0, 0.0, self.z_near), Vec3::new(0.0, 0.0, 1.0)),
