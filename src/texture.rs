@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 use std::fs::File;
-use std::ops::{Add, Div, Mul};
+use std::ops::{Add, Div, Mul, Sub};
 use std::path::Path;
 
 use crate::color::Color;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Tex2 {
     pub u: f32,
     pub v: f32,
@@ -17,13 +17,46 @@ impl Tex2 {
     }
 }
 
-impl Add for Tex2 {
+impl Add<Self> for Tex2 {
     type Output = Tex2;
 
     fn add(self, rhs: Self) -> Self::Output {
         Self {
             u: self.u + rhs.u,
             v: self.v + rhs.v,
+        }
+    }
+}
+
+impl Sub<Self> for Tex2 {
+    type Output = Tex2;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            u: self.u - rhs.u,
+            v: self.v - rhs.v,
+        }
+    }
+}
+
+impl Add<f32> for Tex2 {
+    type Output = Tex2;
+
+    fn add(self, rhs: f32) -> Self::Output {
+        Self {
+            u: self.u + rhs,
+            v: self.v + rhs,
+        }
+    }
+}
+
+impl Sub<f32> for Tex2 {
+    type Output = Tex2;
+
+    fn sub(self, rhs: f32) -> Self::Output {
+        Self {
+            u: self.u - rhs,
+            v: self.v - rhs,
         }
     }
 }
@@ -36,6 +69,14 @@ impl Mul<f32> for Tex2 {
             u: self.u * rhs,
             v: self.v * rhs,
         }
+    }
+}
+
+impl Mul<Tex2> for f32 {
+    type Output = Tex2;
+
+    fn mul(self, rhs: Tex2) -> Self::Output {
+        rhs * self
     }
 }
 

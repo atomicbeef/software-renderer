@@ -25,8 +25,9 @@ mod vector;
 
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
-use polygon::Polygon;
+use polygon::{Polygon, PolygonVertex};
 use texture::Texture;
+use tinyvec::ArrayVec;
 use triangle::Triangle;
 use vector::{Vec2, Vec3, Vec4};
 
@@ -188,7 +189,21 @@ fn update(
             world_transformed_vertices.map(|vertex| camera_matrix * vertex);
 
         // Clip
-        let polygon = Polygon::from(&camera_transformed_vertices.map(|vertex| Vec3::from(vertex)));
+        let mut polygon_verts = ArrayVec::new();
+        polygon_verts.push(PolygonVertex {
+            pos: camera_transformed_vertices[0].into(),
+            uv: mesh.vertex_uvs[face.a_uv as usize],
+        });
+        polygon_verts.push(PolygonVertex {
+            pos: camera_transformed_vertices[1].into(),
+            uv: mesh.vertex_uvs[face.b_uv as usize],
+        });
+        polygon_verts.push(PolygonVertex {
+            pos: camera_transformed_vertices[2].into(),
+            uv: mesh.vertex_uvs[face.c_uv as usize],
+        });
+
+        let polygon = Polygon::new(polygon_verts);
 
         let clipping_planes = camera.clipping_planes(WINDOW_WIDTH as f32 / WINDOW_HEIGHT as f32);
 
@@ -204,7 +219,7 @@ fn update(
         for triangle in clipped_triangles {
             // Project
             let projected_vertices = triangle.map(|vertex| {
-                let vertex = Vec4::from(vertex);
+                let vertex = Vec4::from(vertex.pos);
                 let mut projected = projection_matrix.project_vec4(vertex);
 
                 // Scale and translate into view
@@ -221,9 +236,9 @@ fn update(
                 projected_vertices[0],
                 projected_vertices[1],
                 projected_vertices[2],
-                mesh.vertex_uvs[face.a_uv as usize],
-                mesh.vertex_uvs[face.b_uv as usize],
-                mesh.vertex_uvs[face.c_uv as usize],
+                triangle[0].uv,
+                triangle[1].uv,
+                triangle[2].uv,
                 triangle_color,
             );
 

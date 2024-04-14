@@ -1,4 +1,7 @@
-use crate::{polygon::Polygon, vector::Vec3};
+use crate::{
+    polygon::{Polygon, PolygonVertex},
+    vector::Vec3,
+};
 
 #[derive(Debug)]
 pub struct Plane {
@@ -15,36 +18,37 @@ impl Plane {
         (point - self.point).dot(self.normal) > 0.0
     }
 
-    /// Assumes that a and b actually intersect the plane somewhere
-    pub fn intersection(&self, a: Vec3, b: Vec3) -> Vec3 {
-        let d1 = (a - self.point).dot(self.normal);
-        let d2 = (b - self.point).dot(self.normal);
-
-        let t = d1 / (d1 - d2);
-
-        a + t * (b - a)
-    }
-
     /// Clip a polygon against the plane (only works for convex polygons)
     pub fn clip_polygon(&self, polygon: &Polygon) -> Polygon {
         if polygon.vertices().len() == 0 {
-            return Polygon::new();
-        } else if polygon.vertices().len() == 1 && !self.point_inside(polygon.vertices()[0]) {
-            return Polygon::new();
-        } else if polygon.vertices().len() == 1 && self.point_inside(polygon.vertices()[0]) {
+            return Polygon::default();
+        } else if polygon.vertices().len() == 1 && !self.point_inside(polygon.vertices()[0].pos) {
+            return Polygon::default();
+        } else if polygon.vertices().len() == 1 && self.point_inside(polygon.vertices()[0].pos) {
             return polygon.clone();
         }
 
-        let mut clipped_polygon = Polygon::new();
+        let mut clipped_polygon = Polygon::default();
 
         let mut previous_vert = polygon.vertices()[polygon.vertices().len() - 1];
-        let mut previous_vert_in = self.point_inside(previous_vert);
+        let mut previous_vert_in = self.point_inside(previous_vert.pos);
         for &vert in polygon.vertices().iter() {
-            let vert_in = self.point_inside(vert);
+            let vert_in = self.point_inside(vert.pos);
 
             if previous_vert_in && !vert_in || !previous_vert_in && vert_in {
-                let intersection = self.intersection(previous_vert, vert);
-                clipped_polygon.add_vertex(intersection);
+                // Calculate the intersection point between the vertices on the plane
+                let d1 = (previous_vert.pos - self.point).dot(self.normal);
+                let d2 = (vert.pos - self.point).dot(self.normal);
+
+                let t = d1 / (d1 - d2);
+
+                let intersection = previous_vert.pos + t * (vert.pos - previous_vert.pos);
+                let interpolated_uv = previous_vert.uv + t * (vert.uv - previous_vert.uv);
+
+                clipped_polygon.add_vertex(PolygonVertex {
+                    pos: intersection,
+                    uv: interpolated_uv,
+                });
             }
 
             if vert_in {

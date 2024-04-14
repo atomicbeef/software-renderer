@@ -1,6 +1,6 @@
 use tinyvec::ArrayVec;
 
-use crate::vector::Vec3;
+use crate::{texture::Tex2, vector::Vec3};
 
 // Each time a plane clips a triangle, a maximum of one extra vertex can be produced
 // Since a triangle has 3 vertices and we're clipping against the 6 frustum planes
@@ -8,28 +8,32 @@ use crate::vector::Vec3;
 pub const MAX_POLYGON_VERTS: usize = 9;
 pub const MAX_TRIANGLES: usize = MAX_POLYGON_VERTS - 2;
 
+#[derive(Clone, Copy, Default, Debug)]
+pub struct PolygonVertex {
+    pub pos: Vec3,
+    pub uv: Tex2,
+}
+
 #[derive(Clone, Default, Debug)]
 pub struct Polygon {
-    verts: ArrayVec<[Vec3; MAX_POLYGON_VERTS]>,
+    verts: ArrayVec<[PolygonVertex; MAX_POLYGON_VERTS]>,
 }
 
 impl Polygon {
-    pub fn new() -> Self {
-        Self {
-            verts: ArrayVec::new(),
-        }
+    pub fn new(verts: ArrayVec<[PolygonVertex; MAX_POLYGON_VERTS]>) -> Self {
+        Self { verts }
     }
 
-    pub fn vertices(&self) -> &[Vec3] {
+    pub fn vertices(&self) -> &[PolygonVertex] {
         &self.verts
     }
 
-    pub fn add_vertex(&mut self, vert: Vec3) {
+    pub fn add_vertex(&mut self, vert: PolygonVertex) {
         self.verts.push(vert);
     }
 
     /// Fan triangulate the polygon (only works for convex polygons)
-    pub fn triangulate(&self) -> ArrayVec<[[Vec3; 3]; MAX_TRIANGLES]> {
+    pub fn triangulate(&self) -> ArrayVec<[[PolygonVertex; 3]; MAX_TRIANGLES]> {
         let mut triangles = ArrayVec::new();
 
         if self.verts.len() < 3 {
@@ -43,17 +47,5 @@ impl Polygon {
         }
 
         triangles
-    }
-}
-
-impl From<&[Vec3; 3]> for Polygon {
-    fn from(value: &[Vec3; 3]) -> Self {
-        let mut polygon = Self::default();
-
-        for &vert in value {
-            polygon.add_vertex(vert);
-        }
-
-        polygon
     }
 }
