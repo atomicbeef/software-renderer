@@ -15,7 +15,7 @@ impl Plane {
         (point - self.point).dot(self.normal) > 0.0
     }
 
-    /// Assumes that point actually intersects the plane somewhere
+    /// Assumes that a and b actually intersect the plane somewhere
     pub fn intersection(&self, a: Vec3, b: Vec3) -> Vec3 {
         let d1 = (a - self.point).dot(self.normal);
         let d2 = (b - self.point).dot(self.normal);
