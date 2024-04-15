@@ -19,305 +19,24 @@ mod mesh;
 mod obj;
 mod plane;
 mod polygon;
+mod render;
+mod scene;
 mod texture;
 mod triangle;
 mod vector;
 
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
-use polygon::{Polygon, PolygonVertex};
+use render::{prepare_triangles, render, RenderMode, RenderSettings};
+use scene::update_scene;
 use texture::Texture;
-use tinyvec::ArrayVec;
 use triangle::Triangle;
-use vector::{Vec2, Vec3, Vec4};
+use vector::{Vec2, Vec3};
 
 const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 768;
 
 const FRAME_RATE: f32 = 60.0;
-
-const CAMERA_MOVEMENT_SPEED: f32 = 3.0;
-const CAMERA_LOOK_SENSITIVITY: f32 = 0.025;
-
-#[derive(Clone, Copy)]
-enum RenderMode {
-    Wireframe,
-    WireframeVertex,
-    WireframeFilled,
-    Filled,
-    WireframeTextured,
-    Textured,
-}
-
-#[derive(Clone, Copy)]
-struct RenderSettings {
-    render_mode: RenderMode,
-    backface_cull: bool,
-    shaded: bool,
-    translate: bool,
-    rotate: bool,
-    rotation: Vec3,
-    scale: bool,
-    flip_uvs_vertically: bool,
-}
-
-fn update(
-    triangles_to_render: &mut Vec<Triangle>,
-    projection_matrix: Mat4,
-    camera: &mut Camera,
-    mesh: &mut Mesh,
-    settings: RenderSettings,
-    window: &mut Window,
-    mouse_motion: Vec2,
-    elapsed_time: f32,
-    delta_time: f32,
-) {
-    triangles_to_render.clear();
-
-    // Animate mesh
-    mesh.scale = if settings.scale {
-        Vec3::splat(1.0) * (2.0 * elapsed_time.sin().abs() + 0.05)
-    } else {
-        Vec3::splat(1.0)
-    };
-    mesh.rotation = if settings.rotate {
-        mesh.rotation + settings.rotation
-    } else {
-        mesh.rotation
-    };
-    mesh.translation.x = if settings.translate {
-        2.0 * elapsed_time.sin()
-    } else {
-        0.0
-    };
-    mesh.translation.y = if settings.translate {
-        2.0 * elapsed_time.cos()
-    } else {
-        0.0
-    };
-    mesh.translation.z = if settings.translate {
-        5.0 * elapsed_time.sin()
-    } else {
-        0.0
-    };
-
-    // Update camera direction based on input
-    camera.yaw -= mouse_motion.x * CAMERA_LOOK_SENSITIVITY;
-    camera.pitch += mouse_motion.y * CAMERA_LOOK_SENSITIVITY;
-
-    // Update camera translation based on input
-    let mut camera_movement_direction = Vec3::default();
-    if window.is_key_down(Key::W) {
-        camera_movement_direction.z += 1.0;
-    }
-    if window.is_key_down(Key::S) {
-        camera_movement_direction.z -= 1.0;
-    }
-    if window.is_key_down(Key::D) {
-        camera_movement_direction.x += 1.0;
-    }
-    if window.is_key_down(Key::A) {
-        camera_movement_direction.x -= 1.0;
-    }
-    if window.is_key_down(Key::Space) {
-        camera_movement_direction.y += 1.0;
-    }
-    if window.is_key_down(Key::LeftShift) {
-        camera_movement_direction.y -= 1.0;
-    }
-
-    // Make movement relative to camera direction
-    let camera_movement_direction_transformed = camera_movement_direction
-        .rotated_y(camera.yaw)
-        .rotated_x(camera.pitch)
-        .normalized_or_zero();
-
-    camera.translation +=
-        camera_movement_direction_transformed * CAMERA_MOVEMENT_SPEED * delta_time;
-
-    let scale_matrix = Mat4::scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-    let translation_matrix =
-        Mat4::translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
-    let rotation_x_matrix = Mat4::rotation_x(mesh.rotation.x);
-    let rotation_y_matrix = Mat4::rotation_y(mesh.rotation.y);
-    let rotation_z_matrix = Mat4::rotation_z(mesh.rotation.z);
-
-    let world_matrix = translation_matrix
-        * rotation_x_matrix
-        * rotation_y_matrix
-        * rotation_z_matrix
-        * scale_matrix;
-    let camera_matrix = camera.view_matrix();
-
-    for face in mesh.faces.iter() {
-        let face_vertices = [
-            mesh.vertices[face.a as usize],
-            mesh.vertices[face.b as usize],
-            mesh.vertices[face.c as usize],
-        ];
-
-        // World transform
-        let world_transformed_vertices =
-            face_vertices.map(|vertex| world_matrix * Vec4::from(vertex));
-
-        // Calculate face normal for backface culling and lighting
-        let ab =
-            Vec3::from(world_transformed_vertices[1]) - Vec3::from(world_transformed_vertices[0]);
-        let ac =
-            Vec3::from(world_transformed_vertices[2]) - Vec3::from(world_transformed_vertices[0]);
-        let normal = ab.cross(ac).normalized();
-
-        if settings.backface_cull {
-            let camera_ray = camera.translation - Vec3::from(world_transformed_vertices[0]);
-
-            if normal.dot(camera_ray) < 0.0 {
-                continue;
-            }
-        }
-
-        // Lighting
-        let light_direction = Vec3::new(0.0, 0.0, 1.0).normalized();
-        let percent_lit = normal.dot(light_direction) * -0.5 + 0.5;
-        let triangle_color = if settings.shaded {
-            face.color * percent_lit
-        } else {
-            face.color
-        };
-
-        // Camera transform
-        let camera_transformed_vertices =
-            world_transformed_vertices.map(|vertex| camera_matrix * vertex);
-
-        // Clip
-        let mut polygon_verts = ArrayVec::new();
-        polygon_verts.push(PolygonVertex {
-            pos: camera_transformed_vertices[0].into(),
-            uv: mesh.vertex_uvs[face.a_uv as usize],
-        });
-        polygon_verts.push(PolygonVertex {
-            pos: camera_transformed_vertices[1].into(),
-            uv: mesh.vertex_uvs[face.b_uv as usize],
-        });
-        polygon_verts.push(PolygonVertex {
-            pos: camera_transformed_vertices[2].into(),
-            uv: mesh.vertex_uvs[face.c_uv as usize],
-        });
-
-        let polygon = Polygon::new(polygon_verts);
-
-        let clipping_planes = camera.clipping_planes(WINDOW_WIDTH as f32 / WINDOW_HEIGHT as f32);
-
-        let polygon = clipping_planes.right.clip_polygon(&polygon);
-        let polygon = clipping_planes.left.clip_polygon(&polygon);
-        let polygon = clipping_planes.top.clip_polygon(&polygon);
-        let polygon = clipping_planes.bottom.clip_polygon(&polygon);
-        let polygon = clipping_planes.far.clip_polygon(&polygon);
-        let polygon = clipping_planes.near.clip_polygon(&polygon);
-
-        let clipped_triangles = polygon.triangulate();
-
-        for triangle in clipped_triangles {
-            // Project
-            let projected_vertices = triangle.map(|vertex| {
-                let vertex = Vec4::from(vertex.pos);
-                let mut projected = projection_matrix.project_vec4(vertex);
-
-                // Scale and translate into view
-                projected.x *= WINDOW_WIDTH as f32 / 1.0;
-                projected.y *= WINDOW_HEIGHT as f32 / -1.0;
-
-                projected.x += WINDOW_WIDTH as f32 / 2.0;
-                projected.y += WINDOW_HEIGHT as f32 / 2.0;
-
-                projected
-            });
-
-            let triangle = Triangle::new(
-                projected_vertices[0],
-                projected_vertices[1],
-                projected_vertices[2],
-                triangle[0].uv,
-                triangle[1].uv,
-                triangle[2].uv,
-                triangle_color,
-            );
-
-            triangles_to_render.push(triangle);
-        }
-    }
-}
-
-fn render(
-    color_buffer: &mut ColorBuffer,
-    depth_buffer: &mut DepthBuffer,
-    window: &mut Window,
-    triangles_to_render: &[Triangle],
-    settings: RenderSettings,
-    texture: &Texture,
-) {
-    color_buffer.draw_grid();
-    depth_buffer.clear(1.0);
-
-    for triangle in triangles_to_render.iter() {
-        for point in triangle.points {
-            if point.x == f32::NEG_INFINITY
-                || point.x == f32::INFINITY
-                || point.y == f32::NEG_INFINITY
-                || point.y == f32::INFINITY
-            {
-                continue;
-            }
-
-            if matches!(settings.render_mode, RenderMode::WireframeVertex) {
-                color_buffer.draw_rect(
-                    point.x as usize,
-                    point.y as usize,
-                    2,
-                    2,
-                    Color::new(0, 0xFF, 0),
-                );
-            }
-        }
-
-        match settings.render_mode {
-            RenderMode::Wireframe | RenderMode::WireframeVertex => {
-                color_buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
-            }
-            RenderMode::Filled => {
-                color_buffer.draw_filled_triangle(triangle, triangle.color, depth_buffer);
-            }
-            RenderMode::WireframeFilled => {
-                color_buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                color_buffer.draw_filled_triangle(triangle, triangle.color, depth_buffer);
-            }
-            RenderMode::Textured => color_buffer.draw_textured_triangle(
-                triangle,
-                &texture,
-                depth_buffer,
-                settings.flip_uvs_vertically,
-            ),
-            RenderMode::WireframeTextured => {
-                color_buffer.draw_triangle(triangle, Color::new(0xFF, 0, 0));
-                color_buffer.draw_textured_triangle(
-                    triangle,
-                    &texture,
-                    depth_buffer,
-                    settings.flip_uvs_vertically,
-                );
-            }
-        };
-    }
-
-    window
-        .update_with_buffer(
-            color_buffer.buffer(),
-            color_buffer.width(),
-            color_buffer.height(),
-        )
-        .unwrap();
-
-    color_buffer.clear(Color::new(0, 0, 0));
-}
 
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
@@ -386,6 +105,8 @@ fn main() -> ExitCode {
         rotation: Vec3::new(0.0, 0.01, 0.0),
         scale: false,
         flip_uvs_vertically: false,
+        window_width: WINDOW_WIDTH,
+        window_height: WINDOW_HEIGHT,
     };
 
     let mut last_mouse_pos = window
@@ -473,23 +194,30 @@ fn main() -> ExitCode {
         let delta_time = last_frame_time.elapsed().as_secs_f32();
         last_frame_time = Instant::now();
 
-        update(
+        update_scene(
+            &mut mesh,
+            &mut camera,
+            &render_settings,
+            &mut window,
+            start_time.elapsed().as_secs_f32(),
+            delta_time,
+            mouse_motion,
+        );
+
+        prepare_triangles(
             &mut triangles_to_render,
             projection_matrix,
             &mut camera,
             &mut mesh,
-            render_settings,
-            &mut window,
-            mouse_motion,
-            start_time.elapsed().as_secs_f32(),
-            delta_time,
+            &render_settings,
         );
+
         render(
             &mut color_buffer,
             &mut depth_buffer,
             &mut window,
             &triangles_to_render,
-            render_settings,
+            &render_settings,
             &texture,
         );
     }
