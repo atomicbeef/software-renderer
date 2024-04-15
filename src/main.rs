@@ -33,6 +33,8 @@ use texture::Texture;
 use triangle::Triangle;
 use vector::{Vec2, Vec3};
 
+const RENDER_WIDTH: usize = 512;
+const RENDER_HEIGHT: usize = 384;
 const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 768;
 
@@ -47,14 +49,18 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     }
 
-    let mut color_buffer = ColorBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
-    let mut depth_buffer = DepthBuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
+    let mut color_buffer = ColorBuffer::new(RENDER_WIDTH, RENDER_HEIGHT);
+    let mut depth_buffer = DepthBuffer::new(RENDER_WIDTH, RENDER_HEIGHT);
 
     let mut window = Window::new(
         "3D Renderer",
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
-        WindowOptions::default(),
+        WindowOptions {
+            resize: true,
+            scale_mode: minifb::ScaleMode::AspectRatioStretch,
+            ..Default::default()
+        },
     )
     .expect("Error: Window could not be created!");
 
@@ -91,7 +97,7 @@ fn main() -> ExitCode {
 
     let projection_matrix = Mat4::projection(
         std::f32::consts::FRAC_PI_2,
-        WINDOW_HEIGHT as f32 / WINDOW_WIDTH as f32,
+        RENDER_HEIGHT as f32 / RENDER_WIDTH as f32,
         0.1,
         100.0,
     );
@@ -105,8 +111,8 @@ fn main() -> ExitCode {
         rotation: Vec3::new(0.0, 0.01, 0.0),
         scale: false,
         flip_uvs_vertically: false,
-        window_width: WINDOW_WIDTH,
-        window_height: WINDOW_HEIGHT,
+        render_width: RENDER_WIDTH,
+        render_height: RENDER_HEIGHT,
     };
 
     let mut last_mouse_pos = window

@@ -34,8 +34,8 @@ pub struct RenderSettings {
     pub rotation: Vec3,
     pub scale: bool,
     pub flip_uvs_vertically: bool,
-    pub window_width: usize,
-    pub window_height: usize,
+    pub render_width: usize,
+    pub render_height: usize,
 }
 
 pub fn prepare_triangles(
@@ -118,7 +118,7 @@ pub fn prepare_triangles(
         let polygon = Polygon::new(polygon_verts);
 
         let clipping_planes =
-            camera.clipping_planes(settings.window_width as f32 / settings.window_height as f32);
+            camera.clipping_planes(settings.render_width as f32 / settings.render_height as f32);
 
         let polygon = clipping_planes.right.clip_polygon(&polygon);
         let polygon = clipping_planes.left.clip_polygon(&polygon);
@@ -136,11 +136,11 @@ pub fn prepare_triangles(
                 let mut projected = projection_matrix.project_vec4(vertex);
 
                 // Scale and translate into view
-                projected.x *= settings.window_width as f32 / 1.0;
-                projected.y *= settings.window_height as f32 / -1.0;
+                projected.x *= settings.render_width as f32 / 1.0;
+                projected.y *= settings.render_height as f32 / -1.0;
 
-                projected.x += settings.window_width as f32 / 2.0;
-                projected.y += settings.window_height as f32 / 2.0;
+                projected.x += settings.render_width as f32 / 2.0;
+                projected.y += settings.render_height as f32 / 2.0;
 
                 projected
             });
