@@ -14,7 +14,7 @@ use crate::{
     vector::{Vec3, Vec4},
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum RenderMode {
     Wireframe,
     WireframeVertex,
@@ -90,7 +90,17 @@ pub fn prepare_triangles(
         // Lighting
         let light_direction = Vec3::new(0.0, 0.0, 1.0).normalized();
         let percent_lit = normal.dot(light_direction) * -0.5 + 0.5;
-        let triangle_color = if settings.shaded {
+        let triangle_color = if settings.shaded
+            && (settings.render_mode == RenderMode::WireframeTextured
+                || settings.render_mode == RenderMode::Textured)
+        {
+            Color::new(255, 255, 255) * percent_lit
+        } else if !settings.shaded
+            && (settings.render_mode == RenderMode::WireframeTextured
+                || settings.render_mode == RenderMode::Textured)
+        {
+            Color::new(255, 255, 255)
+        } else if settings.shaded {
             face.color * percent_lit
         } else {
             face.color

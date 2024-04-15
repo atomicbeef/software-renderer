@@ -30,3 +30,15 @@ impl Mul<f32> for Color {
         )
     }
 }
+
+impl Mul<Color> for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: Color) -> Self::Output {
+        let r = (self.r as f32 / 255.0) * (rhs.r as f32 / 255.0);
+        let g = (self.g as f32 / 255.0) * (rhs.g as f32 / 255.0);
+        let b = (self.b as f32 / 255.0) * (rhs.b as f32 / 255.0);
+
+        Self::new((r * 255.0) as u8, (g * 255.0) as u8, (b * 255.0) as u8)
+    }
+}

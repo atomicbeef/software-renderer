@@ -226,6 +226,7 @@ impl ColorBuffer {
         texture: &Texture,
         depth_buffer: &mut DepthBuffer,
         flip_v: bool,
+        triangle_color: Color,
     ) {
         let (alpha, beta, gamma) =
             barycentric_weights(Vec2::from(a.pos), Vec2::from(b.pos), Vec2::from(c.pos), p);
@@ -240,7 +241,7 @@ impl ColorBuffer {
             p_uv.v = 1.0 - p_uv.v;
         }
 
-        let color = texture.sample(p_uv);
+        let color = texture.sample(p_uv) * triangle_color;
 
         if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as usize, p.y as usize) {
             self.set(p.x as usize, p.y as usize, color);
@@ -320,6 +321,7 @@ impl ColorBuffer {
                         texture,
                         depth_buffer,
                         flip_v,
+                        triangle.color,
                     )
                 }
             }
@@ -357,6 +359,7 @@ impl ColorBuffer {
                         texture,
                         depth_buffer,
                         flip_v,
+                        triangle.color,
                     )
                 }
             }
