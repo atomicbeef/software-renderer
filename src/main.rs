@@ -115,10 +115,6 @@ fn main() -> ExitCode {
         render_height: RENDER_HEIGHT,
     };
 
-    let mut last_mouse_pos = window
-        .get_mouse_pos(minifb::MouseMode::Clamp)
-        .unwrap_or((0.0, 0.0));
-
     let start_time = Instant::now();
     let mut last_frame_time = start_time;
 
@@ -187,16 +183,6 @@ fn main() -> ExitCode {
             render_settings.flip_uvs_vertically = !render_settings.flip_uvs_vertically;
         }
 
-        let mouse_pos = window
-            .get_mouse_pos(minifb::MouseMode::Discard)
-            .unwrap_or(last_mouse_pos);
-        let mouse_motion = Vec2::new(
-            mouse_pos.0 - last_mouse_pos.0,
-            mouse_pos.1 - last_mouse_pos.1,
-        )
-        .normalized_or_zero();
-        last_mouse_pos = mouse_pos;
-
         let delta_time = last_frame_time.elapsed().as_secs_f32();
         last_frame_time = Instant::now();
 
@@ -207,7 +193,6 @@ fn main() -> ExitCode {
             &mut window,
             start_time.elapsed().as_secs_f32(),
             delta_time,
-            mouse_motion,
         );
 
         prepare_triangles(

@@ -1,11 +1,6 @@
 use minifb::{Key, Window};
 
-use crate::{
-    camera::Camera,
-    mesh::Mesh,
-    vector::{Vec2, Vec3},
-    RenderSettings,
-};
+use crate::{camera::Camera, mesh::Mesh, vector::Vec3, RenderSettings};
 
 const CAMERA_MOVEMENT_SPEED: f32 = 3.0;
 const CAMERA_LOOK_SENSITIVITY: f32 = 0.025;
@@ -17,7 +12,6 @@ pub fn update_scene(
     window: &mut Window,
     elapsed_time: f32,
     delta_time: f32,
-    mouse_motion: Vec2,
 ) {
     // Animate mesh
     mesh.scale = if settings.scale {
@@ -47,8 +41,18 @@ pub fn update_scene(
     };
 
     // Update camera direction based on input
-    camera.yaw -= mouse_motion.x * CAMERA_LOOK_SENSITIVITY;
-    camera.pitch += mouse_motion.y * CAMERA_LOOK_SENSITIVITY;
+    if window.is_key_down(Key::Left) {
+        camera.yaw -= CAMERA_LOOK_SENSITIVITY;
+    }
+    if window.is_key_down(Key::Right) {
+        camera.yaw += CAMERA_LOOK_SENSITIVITY;
+    }
+    if window.is_key_down(Key::Up) {
+        camera.pitch -= CAMERA_LOOK_SENSITIVITY;
+    }
+    if window.is_key_down(Key::Down) {
+        camera.pitch += CAMERA_LOOK_SENSITIVITY;
+    }
 
     // Update camera translation based on input
     let mut camera_movement_direction = Vec3::default();
@@ -73,8 +77,8 @@ pub fn update_scene(
 
     // Make movement relative to camera direction
     let camera_movement_direction_transformed = camera_movement_direction
-        .rotated_y(camera.yaw)
         .rotated_x(camera.pitch)
+        .rotated_y(camera.yaw)
         .normalized_or_zero();
 
     camera.translation +=
