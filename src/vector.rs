@@ -218,9 +218,9 @@ impl Vec3 {
 
     pub fn rotated_y(&self, angle: f32) -> Self {
         Self {
-            x: self.x * angle.cos() - self.z * angle.sin(),
+            x: self.x * angle.cos() + self.z * angle.sin(),
             y: self.y,
-            z: self.x * angle.sin() + self.z * angle.cos(),
+            z: self.z * angle.cos() - self.x * angle.sin(),
         }
     }
 
