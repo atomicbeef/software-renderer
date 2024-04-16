@@ -71,7 +71,7 @@ pub fn update_scene(
     if window.is_key_down(Key::Space) {
         camera_movement_direction.y += 1.0;
     }
-    if window.is_key_down(Key::LeftShift) {
+    if window.is_key_down(Key::LeftCtrl) {
         camera_movement_direction.y -= 1.0;
     }
 
