@@ -8,4 +8,6 @@ edition = "2021"
 [dependencies]
 minifb = "0.25"
 png = "0.17"
+serde = { version = "1.0.198", features = ["derive"] }
+serde_json = "1.0.116"
 tinyvec = "1.6.0"

@@ -28,6 +28,7 @@ mod vector;
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
 use render::{prepare_triangles, render, RenderMode, RenderSettings};
+use scene::reader::read_objects_from_scene;
 use scene::{Object, Scene};
 use texture::Texture;
 use triangle::Triangle;
@@ -43,12 +44,13 @@ const FRAME_RATE: f32 = 60.0;
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() > 2 {
+    if args.len() != 2 {
         eprintln!("Error: Incorrect arguments specified!");
-        println!("Usage: software-renderer [mesh]");
+        println!("Usage: software-renderer [mesh or scene]");
         return ExitCode::from(1);
     }
 
+    // Window setup
     let mut color_buffer = ColorBuffer::new(RENDER_WIDTH, RENDER_HEIGHT);
     let mut depth_buffer = DepthBuffer::new(RENDER_WIDTH, RENDER_HEIGHT);
 
@@ -66,6 +68,7 @@ fn main() -> ExitCode {
 
     window.limit_update_rate(Some(Duration::from_secs_f32(1.0 / FRAME_RATE)));
 
+    // Scene setup
     let camera = Camera::new(
         Vec3::new(0.0, 0.0, -5.0),
         Vec3::new(0.0, 1.0, 0.0),
@@ -78,25 +81,35 @@ fn main() -> ExitCode {
 
     let mut scene = Scene::new(camera);
 
-    let mesh = if args.len() == 1 {
-        Mesh::cube(1.0)
-    } else {
+    if args[1].ends_with(".obj") {
+        // An OBJ file was specified
         let mesh_path = Path::new(&args[1]);
-        Mesh::from_obj(mesh_path)
-    };
+        let mesh = Mesh::from_obj(mesh_path);
 
-    let texture = if args.len() == 1 {
-        Texture::grid(64, 64, Color::new(0xFF, 0, 0), Color::new(0xFF, 0xFF, 0xFF))
-    } else {
         let texture_path = Path::new(&args[1]).with_extension("png");
-        Texture::from_png(&texture_path).unwrap_or_else(|err| {
+        let texture = Texture::from_png(&texture_path).unwrap_or_else(|err| {
             eprintln!("Error reading texture: {err}");
             Texture::from_color(1, 1, Color::new(0xFF, 0x00, 0xFF))
-        })
-    };
+        });
 
-    scene.add_object(Object { mesh, texture });
+        scene.add_object(Object { mesh, texture });
+    } else {
+        // Assume a scene file was specified
+        let scene_path = Path::new(&args[1]);
+        let objects = match read_objects_from_scene(scene_path) {
+            Ok(objects) => objects,
+            Err(e) => {
+                eprintln!("Error reading scene file: {e}");
+                return ExitCode::from(1);
+            }
+        };
 
+        for object in objects {
+            scene.add_object(object);
+        }
+    }
+
+    // Main loop preparation
     let mut triangles_to_render: Vec<Triangle> = Vec::new();
 
     let projection_matrix = Mat4::projection(
@@ -122,6 +135,7 @@ fn main() -> ExitCode {
     let start_time = Instant::now();
     let mut last_frame_time = start_time;
 
+    // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_down(Key::Key1) {
             render_settings.render_mode = RenderMode::WireframeVertex;
@@ -193,6 +207,8 @@ fn main() -> ExitCode {
             delta_time,
         );
 
+        color_buffer.draw_grid();
+
         for object in scene.objects() {
             prepare_triangles(
                 &mut triangles_to_render,
@@ -205,12 +221,22 @@ fn main() -> ExitCode {
             render(
                 &mut color_buffer,
                 &mut depth_buffer,
-                &mut window,
                 &triangles_to_render,
                 &render_settings,
                 &object.texture,
             );
         }
+
+        window
+            .update_with_buffer(
+                color_buffer.buffer(),
+                color_buffer.width(),
+                color_buffer.height(),
+            )
+            .unwrap();
+
+        depth_buffer.clear(1.0);
+        color_buffer.clear(Color::new(0, 0, 0));
     }
 
     return ExitCode::from(0);

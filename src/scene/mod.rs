@@ -2,6 +2,8 @@ use minifb::{Key, KeyRepeat, Window};
 
 use crate::{camera::Camera, mesh::Mesh, texture::Texture, vector::Vec3, RenderSettings};
 
+pub mod reader;
+
 const CAMERA_MOVEMENT_SPEED: f32 = 3.0;
 const CAMERA_LOOK_SENSITIVITY: f32 = 0.025;
 
@@ -52,19 +54,19 @@ impl Scene {
                 object.mesh.rotation
             };
 
-            object.mesh.translation.x = if settings.translate {
+            object.mesh.translation.x += if settings.translate {
                 2.0 * elapsed_time.sin()
             } else {
                 0.0
             };
 
-            object.mesh.translation.y = if settings.translate {
+            object.mesh.translation.y += if settings.translate {
                 2.0 * elapsed_time.cos()
             } else {
                 0.0
             };
 
-            object.mesh.translation.z = if settings.translate {
+            object.mesh.translation.z += if settings.translate {
                 5.0 * elapsed_time.sin()
             } else {
                 0.0

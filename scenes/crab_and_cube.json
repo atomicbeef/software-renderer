@@ -1,0 +1,28 @@
+[
+    {
+        "mesh_path": "crab.obj",
+        "texture_path": "crab.png",
+        "translation_x": 0.0,
+        "translation_y": 0.0,
+        "translation_z": 0.0,
+        "rotation_x": 0.0,
+        "rotation_y": 0.0,
+        "rotation_z": 0.0,
+        "scale_x": 1.0,
+        "scale_y": 1.0,
+        "scale_z": 1.0
+    },
+    {
+        "mesh_path": "cube.obj",
+        "texture_path": "cube.png",
+        "translation_x": 0.0,
+        "translation_y": 0.0,
+        "translation_z": -10.0,
+        "rotation_x": 0.0,
+        "rotation_y": 0.0,
+        "rotation_z": 0.0,
+        "scale_x": 1.0,
+        "scale_y": 1.0,
+        "scale_z": 1.0
+    }
+]

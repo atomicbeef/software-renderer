@@ -133,25 +133,6 @@ impl Texture {
         }
     }
 
-    pub fn grid(width: u32, height: u32, fill_color: Color, line_color: Color) -> Self {
-        let mut pixels = Vec::with_capacity(width as usize * height as usize);
-        for y in 0..height {
-            for x in 0..width {
-                if x % 10 == 0 || y % 10 == 0 {
-                    pixels.push(line_color);
-                } else {
-                    pixels.push(fill_color);
-                }
-            }
-        }
-
-        Self {
-            width,
-            height,
-            pixels,
-        }
-    }
-
     pub fn from_png(path: &Path) -> Result<Self, TextureError> {
         let png_file =
             File::open(path).or_else(|_| Err(TextureError::ReadError(path.to_string_lossy())))?;

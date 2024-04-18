@@ -1,4 +1,3 @@
-use minifb::Window;
 use tinyvec::ArrayVec;
 
 use crate::{
@@ -173,14 +172,10 @@ pub fn prepare_triangles(
 pub fn render(
     color_buffer: &mut ColorBuffer,
     depth_buffer: &mut DepthBuffer,
-    window: &mut Window,
     triangles_to_render: &[Triangle],
     settings: &RenderSettings,
     texture: &Texture,
 ) {
-    color_buffer.draw_grid();
-    depth_buffer.clear(1.0);
-
     for triangle in triangles_to_render.iter() {
         for point in triangle.points {
             if point.x == f32::NEG_INFINITY
@@ -230,14 +225,4 @@ pub fn render(
             }
         };
     }
-
-    window
-        .update_with_buffer(
-            color_buffer.buffer(),
-            color_buffer.width(),
-            color_buffer.height(),
-        )
-        .unwrap();
-
-    color_buffer.clear(Color::new(0, 0, 0));
 }
