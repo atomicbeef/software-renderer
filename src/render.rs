@@ -41,8 +41,8 @@ pub struct RenderSettings {
 pub fn prepare_triangles(
     triangles_to_render: &mut Vec<Triangle>,
     projection_matrix: Mat4,
-    camera: &mut Camera,
-    mesh: &mut Mesh,
+    mesh: &Mesh,
+    camera: &Camera,
     settings: &RenderSettings,
 ) {
     triangles_to_render.clear();
@@ -125,10 +125,10 @@ pub fn prepare_triangles(
             uv: mesh.vertex_uvs[face.c_uv as usize],
         });
 
-        let polygon = Polygon::new(polygon_verts);
-
         let clipping_planes =
             camera.clipping_planes(settings.render_width as f32 / settings.render_height as f32);
+
+        let polygon = Polygon::new(polygon_verts);
 
         let polygon = clipping_planes.right.clip_polygon(&polygon);
         let polygon = clipping_planes.left.clip_polygon(&polygon);

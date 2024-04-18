@@ -28,7 +28,7 @@ mod vector;
 use color_buffer::ColorBuffer;
 use mesh::Mesh;
 use render::{prepare_triangles, render, RenderMode, RenderSettings};
-use scene::update_scene;
+use scene::{Object, Scene};
 use texture::Texture;
 use triangle::Triangle;
 use vector::{Vec2, Vec3};
@@ -66,7 +66,19 @@ fn main() -> ExitCode {
 
     window.limit_update_rate(Some(Duration::from_secs_f32(1.0 / FRAME_RATE)));
 
-    let mut mesh = if args.len() == 1 {
+    let camera = Camera::new(
+        Vec3::new(0.0, 0.0, -5.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        0.0,
+        0.0,
+        std::f32::consts::FRAC_PI_3,
+        0.1,
+        100.0,
+    );
+
+    let mut scene = Scene::new(camera);
+
+    let mesh = if args.len() == 1 {
         Mesh::cube(1.0)
     } else {
         let mesh_path = Path::new(&args[1]);
@@ -83,17 +95,9 @@ fn main() -> ExitCode {
         })
     };
 
-    let mut triangles_to_render: Vec<Triangle> = Vec::new();
+    scene.add_object(Object { mesh, texture });
 
-    let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, -5.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        0.0,
-        0.0,
-        std::f32::consts::FRAC_PI_3,
-        0.1,
-        100.0,
-    );
+    let mut triangles_to_render: Vec<Triangle> = Vec::new();
 
     let projection_matrix = Mat4::projection(
         std::f32::consts::FRAC_PI_2,
@@ -175,10 +179,6 @@ fn main() -> ExitCode {
             };
         }
 
-        if window.is_key_pressed(Key::P, KeyRepeat::No) {
-            mesh.rotation = Vec3::default();
-        }
-
         if window.is_key_pressed(Key::F, KeyRepeat::No) {
             render_settings.flip_uvs_vertically = !render_settings.flip_uvs_vertically;
         }
@@ -186,31 +186,31 @@ fn main() -> ExitCode {
         let delta_time = last_frame_time.elapsed().as_secs_f32();
         last_frame_time = Instant::now();
 
-        update_scene(
-            &mut mesh,
-            &mut camera,
+        scene.update(
             &render_settings,
             &mut window,
             start_time.elapsed().as_secs_f32(),
             delta_time,
         );
 
-        prepare_triangles(
-            &mut triangles_to_render,
-            projection_matrix,
-            &mut camera,
-            &mut mesh,
-            &render_settings,
-        );
+        for object in scene.objects() {
+            prepare_triangles(
+                &mut triangles_to_render,
+                projection_matrix,
+                &object.mesh,
+                &scene.camera,
+                &render_settings,
+            );
 
-        render(
-            &mut color_buffer,
-            &mut depth_buffer,
-            &mut window,
-            &triangles_to_render,
-            &render_settings,
-            &texture,
-        );
+            render(
+                &mut color_buffer,
+                &mut depth_buffer,
+                &mut window,
+                &triangles_to_render,
+                &render_settings,
+                &object.texture,
+            );
+        }
     }
 
     return ExitCode::from(0);
