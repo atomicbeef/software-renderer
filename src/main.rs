@@ -144,62 +144,101 @@ fn main() -> ExitCode {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_down(Key::Key1) {
             render_settings.render_mode = RenderMode::WireframeVertex;
+            println!("Rendering wireframes with vertices");
         } else if window.is_key_down(Key::Key2) {
             render_settings.render_mode = RenderMode::Wireframe;
+            println!("Rendering wireframes");
         } else if window.is_key_down(Key::Key3) {
             render_settings.render_mode = RenderMode::Filled;
+            println!("Rendering filled triangles");
         } else if window.is_key_down(Key::Key4) {
             render_settings.render_mode = RenderMode::WireframeFilled;
+            println!("Rendering filled triangles with wireframes");
         } else if window.is_key_down(Key::Key5) {
             render_settings.render_mode = RenderMode::Textured;
+            println!("Rendering textured triangles");
         } else if window.is_key_down(Key::Key6) {
             render_settings.render_mode = RenderMode::WireframeTextured;
+            println!("Rendering textured triangles with wireframe");
         }
 
         if window.is_key_pressed(Key::C, KeyRepeat::No) {
             render_settings.backface_cull = !render_settings.backface_cull;
+
+            if render_settings.backface_cull {
+                println!("Back-face culling enabled");
+            } else {
+                println!("Back-face culling disabled");
+            }
         }
 
-        if window.is_key_down(Key::L) {
+        if window.is_key_pressed(Key::L, KeyRepeat::No) {
             render_settings.shaded = true;
-        } else if window.is_key_down(Key::U) {
+            println!("Lighting enabled");
+        } else if window.is_key_pressed(Key::U, KeyRepeat::No) {
             render_settings.shaded = false;
+            println!("Lighting disabled");
         }
 
         if window.is_key_pressed(Key::T, KeyRepeat::No) {
             render_settings.translate = !render_settings.translate;
+
+            if render_settings.translate {
+                println!("Translation animation enabled");
+            } else {
+                println!("Translation animation disabled");
+            }
         }
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
             render_settings.rotate = !render_settings.rotate;
+
+            if render_settings.rotate {
+                println!("Rotation animation enabled");
+            } else {
+                println!("Rotation animation disabled");
+            }
         }
         if window.is_key_pressed(Key::G, KeyRepeat::No) {
             render_settings.scale = !render_settings.scale;
+
+            if render_settings.scale {
+                println!("Scale animation enabled");
+            } else {
+                println!("Scale animation disabled");
+            }
         }
 
         if window.is_key_pressed(Key::X, KeyRepeat::No) {
             render_settings.rotation.x = if render_settings.rotation.x > 0.0 {
+                println!("Rotation on X-axis disabled");
                 0.0
             } else {
+                println!("Rotation on X-axis enabled");
                 0.01
             };
         }
         if window.is_key_pressed(Key::Y, KeyRepeat::No) {
             render_settings.rotation.y = if render_settings.rotation.y > 0.0 {
+                println!("Rotation on Y-axis disabled");
                 0.0
             } else {
+                println!("Rotation on Y-axis enabled");
                 0.01
             };
         }
         if window.is_key_pressed(Key::Z, KeyRepeat::No) {
             render_settings.rotation.z = if render_settings.rotation.z > 0.0 {
+                println!("Rotation on Z-axis disabled");
                 0.0
             } else {
+                println!("Rotation on Z-axis enabled");
                 0.01
             };
         }
 
         if window.is_key_pressed(Key::F, KeyRepeat::No) {
             render_settings.flip_uvs_vertically = !render_settings.flip_uvs_vertically;
+            println!("Flipping UVs");
         }
 
         let delta_time = last_frame_time.elapsed().as_secs_f32();

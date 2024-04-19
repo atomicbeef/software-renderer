@@ -40,6 +40,11 @@ impl Scene {
         elapsed_time: f32,
         delta_time: f32,
     ) {
+        let reset_orientation = window.is_key_pressed(Key::P, KeyRepeat::No);
+        if reset_orientation {
+            println!("Mesh orientation reset");
+        }
+
         // Animate objects
         for object in self.objects.iter_mut() {
             object.mesh.scale = if settings.scale {
@@ -72,7 +77,7 @@ impl Scene {
                 object.mesh.initial_translation().z
             };
 
-            if window.is_key_pressed(Key::P, KeyRepeat::No) {
+            if reset_orientation {
                 object.mesh.rotation = Vec3::default();
             }
         }
