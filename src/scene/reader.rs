@@ -14,15 +14,9 @@ use super::Object;
 struct SceneObject {
     mesh_path: String,
     texture_path: String,
-    translation_x: f32,
-    translation_y: f32,
-    translation_z: f32,
-    rotation_x: f32,
-    rotation_y: f32,
-    rotation_z: f32,
-    scale_x: f32,
-    scale_y: f32,
-    scale_z: f32,
+    rotation: Vec3,
+    scale: Vec3,
+    translation: Vec3,
 }
 
 pub enum SceneDeserializeError<'a> {
@@ -54,22 +48,11 @@ pub fn read_objects_from_scene(path: &Path) -> Result<Vec<Object>, SceneDeserial
 
     for scene_object in serialized_scene.iter() {
         let mesh_path = Path::new("assets/").join(&scene_object.mesh_path);
-        let mut mesh = Mesh::from_obj(&mesh_path);
-
-        mesh.translation = Vec3::new(
-            scene_object.translation_x,
-            scene_object.translation_y,
-            scene_object.translation_z,
-        );
-        mesh.rotation = Vec3::new(
-            scene_object.rotation_x,
-            scene_object.rotation_y,
-            scene_object.rotation_z,
-        );
-        mesh.scale = Vec3::new(
-            scene_object.scale_x,
-            scene_object.scale_y,
-            scene_object.scale_z,
+        let mesh = Mesh::from_obj(
+            &mesh_path,
+            scene_object.rotation,
+            scene_object.scale,
+            scene_object.translation,
         );
 
         let texture_path = Path::new("assets/").join(&scene_object.texture_path);

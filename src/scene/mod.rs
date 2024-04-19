@@ -54,22 +54,22 @@ impl Scene {
                 object.mesh.rotation
             };
 
-            object.mesh.translation.x += if settings.translate {
-                2.0 * elapsed_time.sin()
+            object.mesh.translation.x = if settings.translate {
+                object.mesh.initial_translation().x + 2.0 * elapsed_time.sin()
             } else {
-                0.0
+                object.mesh.initial_translation().x
             };
 
-            object.mesh.translation.y += if settings.translate {
-                2.0 * elapsed_time.cos()
+            object.mesh.translation.y = if settings.translate {
+                object.mesh.initial_translation().y + 2.0 * elapsed_time.cos()
             } else {
-                0.0
+                object.mesh.initial_translation().y
             };
 
-            object.mesh.translation.z += if settings.translate {
-                5.0 * elapsed_time.sin()
+            object.mesh.translation.z = if settings.translate {
+                object.mesh.initial_translation().z + 5.0 * elapsed_time.sin()
             } else {
-                0.0
+                object.mesh.initial_translation().z
             };
 
             if window.is_key_pressed(Key::P, KeyRepeat::No) {

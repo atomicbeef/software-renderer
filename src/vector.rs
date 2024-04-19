@@ -1,5 +1,7 @@
 use std::ops::{Add, AddAssign, Div, Mul, Sub};
 
+use serde::Deserialize;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
@@ -104,7 +106,7 @@ impl From<Vec4> for Vec2 {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,

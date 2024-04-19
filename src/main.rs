@@ -84,7 +84,12 @@ fn main() -> ExitCode {
     if args[1].ends_with(".obj") {
         // An OBJ file was specified
         let mesh_path = Path::new(&args[1]);
-        let mesh = Mesh::from_obj(mesh_path);
+        let mesh = Mesh::from_obj(
+            mesh_path,
+            Vec3::default(),
+            Vec3::splat(1.0),
+            Vec3::default(),
+        );
 
         let texture_path = Path::new(&args[1]).with_extension("png");
         let texture = Texture::from_png(&texture_path).unwrap_or_else(|err| {

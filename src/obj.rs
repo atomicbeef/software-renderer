@@ -116,7 +116,7 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
 }
 
 impl Mesh {
-    pub fn from_obj(obj_file_path: &Path) -> Self {
+    pub fn from_obj(obj_file_path: &Path, rotation: Vec3, scale: Vec3, translation: Vec3) -> Self {
         let obj_file = File::open(obj_file_path).expect("Could not open OBJ file for reading!");
 
         let mut vertices = Vec::new();
@@ -141,14 +141,7 @@ impl Mesh {
             }
         }
 
-        Self {
-            vertices,
-            vertex_uvs,
-            faces,
-            rotation: Vec3::default(),
-            scale: Vec3::splat(1.0),
-            translation: Vec3::default(),
-        }
+        Self::new(vertices, vertex_uvs, faces, rotation, scale, translation)
     }
 }
 
@@ -189,7 +182,12 @@ mod tests {
 
     #[test]
     fn model_can_be_read() {
-        let model = Mesh::from_obj(Path::new("assets/cube.obj"));
+        let model = Mesh::from_obj(
+            Path::new("assets/cube.obj"),
+            Vec3::default(),
+            Vec3::splat(1.0),
+            Vec3::default(),
+        );
 
         assert_eq!(
             model.vertices,
