@@ -142,22 +142,22 @@ fn main() -> ExitCode {
 
     // Main loop
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        if window.is_key_down(Key::Key1) {
+        if window.is_key_pressed(Key::Key1, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::WireframeVertex;
             println!("Rendering wireframes with vertices");
-        } else if window.is_key_down(Key::Key2) {
+        } else if window.is_key_pressed(Key::Key2, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::Wireframe;
             println!("Rendering wireframes");
-        } else if window.is_key_down(Key::Key3) {
+        } else if window.is_key_pressed(Key::Key3, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::Filled;
             println!("Rendering filled triangles");
-        } else if window.is_key_down(Key::Key4) {
+        } else if window.is_key_pressed(Key::Key4, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::WireframeFilled;
             println!("Rendering filled triangles with wireframes");
-        } else if window.is_key_down(Key::Key5) {
+        } else if window.is_key_pressed(Key::Key5, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::Textured;
             println!("Rendering textured triangles");
-        } else if window.is_key_down(Key::Key6) {
+        } else if window.is_key_pressed(Key::Key6, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::WireframeTextured;
             println!("Rendering textured triangles with wireframe");
         }
