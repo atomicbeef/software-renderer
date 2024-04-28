@@ -74,9 +74,6 @@ fn main() -> ExitCode {
         Vec3::new(0.0, 1.0, 0.0),
         0.0,
         0.0,
-        std::f32::consts::FRAC_PI_3,
-        0.1,
-        100.0,
     );
 
     let mut scene = Scene::new(camera);

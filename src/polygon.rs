@@ -1,6 +1,6 @@
 use tinyvec::ArrayVec;
 
-use crate::{texture::Tex2, vector::Vec3};
+use crate::{texture::Tex2, vector::Vec4};
 
 // Each time a plane clips a triangle, a maximum of one extra vertex can be produced
 // Since a triangle has 3 vertices and we're clipping against the 6 frustum planes
@@ -10,7 +10,7 @@ pub const MAX_TRIANGLES: usize = MAX_POLYGON_VERTS - 2;
 
 #[derive(Clone, Copy, Default, Debug)]
 pub struct PolygonVertex {
-    pub pos: Vec3,
+    pub pos: Vec4,
     pub uv: Tex2,
 }
 

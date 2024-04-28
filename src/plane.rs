@@ -1,21 +1,33 @@
 use crate::{
     polygon::{Polygon, PolygonVertex},
-    vector::Vec3,
+    vector::Vec4,
 };
 
 #[derive(Debug)]
-pub struct Plane {
-    pub point: Vec3,
-    pub normal: Vec3,
+pub enum Plane {
+    Left,
+    Right,
+    Top,
+    Bottom,
+    Far,
+    Near,
+    W,
 }
 
-impl Plane {
-    pub fn new(point: Vec3, normal: Vec3) -> Self {
-        Self { point, normal }
-    }
+const W_EPSILON: f32 = 0.00001;
 
-    pub fn point_inside(&self, point: Vec3) -> bool {
-        (point - self.point).dot(self.normal) > 0.0
+impl Plane {
+    pub fn point_inside(&self, point: Vec4) -> bool {
+        match self {
+            Plane::Right => point.x <= point.w,
+            Plane::Left => point.x >= -point.w,
+            Plane::Top => point.y <= point.w,
+            Plane::Bottom => point.y >= -point.w,
+            Plane::Far => point.z <= point.w,
+            Plane::Near => point.z >= -point.w,
+            // Prevent division by 0 if clipping produces coordinate with w = 0
+            Plane::W => point.w >= W_EPSILON,
+        }
     }
 
     /// Clip a polygon against the plane (only works for convex polygons)
@@ -37,10 +49,41 @@ impl Plane {
 
             if previous_vert_in && !vert_in || !previous_vert_in && vert_in {
                 // Calculate the intersection point between the vertices on the plane
-                let d1 = (previous_vert.pos - self.point).dot(self.normal);
-                let d2 = (vert.pos - self.point).dot(self.normal);
-
-                let t = d1 / (d1 - d2);
+                let t = match self {
+                    Plane::Left => {
+                        (previous_vert.pos.w + previous_vert.pos.x)
+                            / ((previous_vert.pos.w + previous_vert.pos.x)
+                                - (vert.pos.w + vert.pos.x))
+                    }
+                    Plane::Right => {
+                        (previous_vert.pos.w - previous_vert.pos.x)
+                            / ((previous_vert.pos.w - previous_vert.pos.x)
+                                - (vert.pos.w - vert.pos.x))
+                    }
+                    Plane::Top => {
+                        (previous_vert.pos.w - previous_vert.pos.y)
+                            / ((previous_vert.pos.w - previous_vert.pos.y)
+                                - (vert.pos.w - vert.pos.y))
+                    }
+                    Plane::Bottom => {
+                        (previous_vert.pos.w + previous_vert.pos.y)
+                            / ((previous_vert.pos.w + previous_vert.pos.y)
+                                - (vert.pos.w + vert.pos.y))
+                    }
+                    Plane::Far => {
+                        (previous_vert.pos.w - previous_vert.pos.z)
+                            / ((previous_vert.pos.w - previous_vert.pos.z)
+                                - (vert.pos.w - vert.pos.z))
+                    }
+                    Plane::Near => {
+                        (previous_vert.pos.w + previous_vert.pos.z)
+                            / ((previous_vert.pos.w + previous_vert.pos.z)
+                                - (vert.pos.w + vert.pos.z))
+                    }
+                    Plane::W => {
+                        (W_EPSILON - previous_vert.pos.w) / (previous_vert.pos.w - vert.pos.w)
+                    }
+                };
 
                 let intersection = previous_vert.pos + t * (vert.pos - previous_vert.pos);
                 let interpolated_uv = previous_vert.uv + t * (vert.uv - previous_vert.uv);

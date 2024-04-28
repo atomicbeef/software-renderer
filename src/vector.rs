@@ -340,3 +340,32 @@ impl Add<Vec4> for Vec4 {
         )
     }
 }
+
+impl Sub<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, rhs: Vec4) -> Self::Output {
+        Vec4::new(
+            self.x - rhs.x,
+            self.y - rhs.y,
+            self.z - rhs.z,
+            self.w - rhs.w,
+        )
+    }
+}
+
+impl Mul<f32> for Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vec4::new(self.x * rhs, self.y * rhs, self.z * rhs, self.w * rhs)
+    }
+}
+
+impl Mul<Vec4> for f32 {
+    type Output = Vec4;
+
+    fn mul(self, rhs: Vec4) -> Self::Output {
+        rhs * self
+    }
+}

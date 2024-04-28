@@ -7,6 +7,7 @@ use crate::{
     depth_buffer::DepthBuffer,
     matrix::Mat4,
     mesh::Mesh,
+    plane::Plane,
     polygon::{Polygon, PolygonVertex},
     texture::Texture,
     triangle::Triangle,
@@ -109,47 +110,49 @@ pub fn prepare_triangles(
         let camera_transformed_vertices =
             world_transformed_vertices.map(|vertex| camera_matrix * vertex);
 
+        // Project
+        let projected_vertices = camera_transformed_vertices.map(|v| projection_matrix * v);
+
         // Clip
         let mut polygon_verts = ArrayVec::new();
         polygon_verts.push(PolygonVertex {
-            pos: camera_transformed_vertices[0].into(),
+            pos: projected_vertices[0].into(),
             uv: mesh.vertex_uvs[face.a_uv as usize],
         });
         polygon_verts.push(PolygonVertex {
-            pos: camera_transformed_vertices[1].into(),
+            pos: projected_vertices[1].into(),
             uv: mesh.vertex_uvs[face.b_uv as usize],
         });
         polygon_verts.push(PolygonVertex {
-            pos: camera_transformed_vertices[2].into(),
+            pos: projected_vertices[2].into(),
             uv: mesh.vertex_uvs[face.c_uv as usize],
         });
 
-        let clipping_planes =
-            camera.clipping_planes(settings.render_width as f32 / settings.render_height as f32);
-
         let polygon = Polygon::new(polygon_verts);
 
-        let polygon = clipping_planes.right.clip_polygon(&polygon);
-        let polygon = clipping_planes.left.clip_polygon(&polygon);
-        let polygon = clipping_planes.top.clip_polygon(&polygon);
-        let polygon = clipping_planes.bottom.clip_polygon(&polygon);
-        let polygon = clipping_planes.far.clip_polygon(&polygon);
-        let polygon = clipping_planes.near.clip_polygon(&polygon);
+        let polygon = Plane::Right.clip_polygon(&polygon);
+        let polygon = Plane::Left.clip_polygon(&polygon);
+        let polygon = Plane::Top.clip_polygon(&polygon);
+        let polygon = Plane::Bottom.clip_polygon(&polygon);
+        let polygon = Plane::Far.clip_polygon(&polygon);
+        let polygon = Plane::Near.clip_polygon(&polygon);
+        let polygon = Plane::W.clip_polygon(&polygon);
 
         let clipped_triangles = polygon.triangulate();
 
-        // Project
+        // Finish projection
         for triangle in clipped_triangles {
             let projected_vertices = triangle.map(|vertex| {
-                let vertex = Vec4::from(vertex.pos);
-                let mut projected = projection_matrix.project_vec4(vertex);
+                let mut projected = Vec4::new(
+                    vertex.pos.x / vertex.pos.w,
+                    vertex.pos.y / vertex.pos.w,
+                    vertex.pos.z / vertex.pos.w,
+                    vertex.pos.w,
+                );
 
                 // Scale and translate into view
-                projected.x *= settings.render_width as f32 / 1.0;
-                projected.y *= settings.render_height as f32 / -1.0;
-
-                projected.x += settings.render_width as f32 / 2.0;
-                projected.y += settings.render_height as f32 / 2.0;
+                projected.x = (projected.x + 1.0) * settings.render_width as f32 / 2.0;
+                projected.y = (projected.y - 1.0) * settings.render_height as f32 / -2.0;
 
                 projected
             });
