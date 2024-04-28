@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["assets/cube.obj"],
+            "args": ["assets/triangle.obj"],
             "cwd": "${workspaceFolder}"
         },
         {
