@@ -151,8 +151,8 @@ pub fn prepare_triangles(
                 );
 
                 // Scale and translate into view
-                projected.x = (projected.x + 1.0) * settings.render_width as f32 / 2.0;
-                projected.y = (projected.y - 1.0) * settings.render_height as f32 / -2.0;
+                projected.x = (projected.x + 1.0) * (settings.render_width as f32 - 1.0) / 2.0;
+                projected.y = (projected.y - 1.0) * (settings.render_height as f32 - 1.0) / -2.0;
 
                 projected
             });

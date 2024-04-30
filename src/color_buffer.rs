@@ -32,8 +32,9 @@ impl ColorBuffer {
     }
 
     pub fn set(&mut self, x: usize, y: usize, color: Color) {
-        if x < self.width && y < self.height {
-            self.buffer[self.width * y + x] = color.into();
-        }
+        assert!(x < self.width);
+        assert!(y < self.height);
+
+        self.buffer[self.width * y + x] = color.into();
     }
 }

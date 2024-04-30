@@ -18,16 +18,16 @@ impl DepthBuffer {
     }
 
     pub fn get(&self, x: usize, y: usize) -> f32 {
-        if x < self.width && y < self.height {
-            self.buffer[self.width * y + x]
-        } else {
-            1.0
-        }
+        assert!(x < self.width);
+        assert!(y < self.height);
+
+        self.buffer[self.width * y + x]
     }
 
     pub fn set(&mut self, x: usize, y: usize, depth: f32) {
-        if x < self.width && y < self.height {
-            self.buffer[self.width * y + x] = depth;
-        }
+        assert!(x < self.width);
+        assert!(y < self.height);
+
+        self.buffer[self.width * y + x] = depth;
     }
 }
