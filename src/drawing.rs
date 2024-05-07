@@ -38,7 +38,7 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_rect(&mut self, x: usize, y: usize, width: usize, height: usize, color: Color) {
+    pub fn draw_rect(&mut self, x: u16, y: u16, width: u16, height: u16, color: Color) {
         for xi in 0..width {
             for yi in 0..height {
                 self.set(x + xi, y + yi, color);
@@ -46,7 +46,7 @@ impl ColorBuffer {
         }
     }
 
-    pub fn draw_line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, color: Color) {
+    pub fn draw_line(&mut self, x0: u16, y0: u16, x1: u16, y1: u16, color: Color) {
         let dx = x1 as isize - x0 as isize;
         let dy = y1 as isize - y0 as isize;
 
@@ -63,7 +63,7 @@ impl ColorBuffer {
         let mut y = y0 as f32;
 
         for _ in 0..side_length {
-            self.set(x.round() as usize, y.round() as usize, color);
+            self.set(x.round() as u16, y.round() as u16, color);
             x += x_inc;
             y += y_inc;
         }
@@ -72,28 +72,28 @@ impl ColorBuffer {
     pub fn draw_triangle(&mut self, triangle: &Triangle, color: Color) {
         // A -> B
         self.draw_line(
-            triangle.points[0].x as usize,
-            triangle.points[0].y as usize,
-            triangle.points[1].x as usize,
-            triangle.points[1].y as usize,
+            triangle.points[0].x as u16,
+            triangle.points[0].y as u16,
+            triangle.points[1].x as u16,
+            triangle.points[1].y as u16,
             color,
         );
 
         // B -> C
         self.draw_line(
-            triangle.points[1].x as usize,
-            triangle.points[1].y as usize,
-            triangle.points[2].x as usize,
-            triangle.points[2].y as usize,
+            triangle.points[1].x as u16,
+            triangle.points[1].y as u16,
+            triangle.points[2].x as u16,
+            triangle.points[2].y as u16,
             color,
         );
 
         // C -> A
         self.draw_line(
-            triangle.points[2].x as usize,
-            triangle.points[2].y as usize,
-            triangle.points[0].x as usize,
-            triangle.points[0].y as usize,
+            triangle.points[2].x as u16,
+            triangle.points[2].y as u16,
+            triangle.points[0].x as u16,
+            triangle.points[0].y as u16,
             color,
         );
     }
@@ -112,9 +112,9 @@ impl ColorBuffer {
 
         let interpolated_reciprocal_w = 1.0 / a.w * alpha + 1.0 / b.w * beta + 1.0 / c.w * gamma;
 
-        if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as usize, p.y as usize) {
-            self.set(p.x as usize, p.y as usize, color);
-            depth_buffer.set(p.x as usize, p.y as usize, 1.0 - interpolated_reciprocal_w);
+        if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as u16, p.y as u16) {
+            self.set(p.x as u16, p.y as u16, color);
+            depth_buffer.set(p.x as u16, p.y as u16, 1.0 - interpolated_reciprocal_w);
         }
     }
 
@@ -124,94 +124,21 @@ impl ColorBuffer {
         color: Color,
         depth_buffer: &mut DepthBuffer,
     ) {
-        // Floor vertex x and y components to align to pixels and prevent rendering artifacts
-        let mut vertices = [
-            Vec4::new(
-                triangle.points[0].x.floor(),
-                triangle.points[0].y.floor(),
-                triangle.points[0].z,
-                triangle.points[0].w,
-            ),
-            Vec4::new(
-                triangle.points[1].x.floor(),
-                triangle.points[1].y.floor(),
-                triangle.points[1].z,
-                triangle.points[1].w,
-            ),
-            Vec4::new(
-                triangle.points[2].x.floor(),
-                triangle.points[2].y.floor(),
-                triangle.points[2].z,
-                triangle.points[2].w,
-            ),
-        ];
+        let (min_x, min_y, max_x, max_y) = triangle.bounding_box();
 
-        vertices.sort_by(|a, b| a.y.partial_cmp(&b.y).unwrap());
+        for y in min_y as u16..=max_y as u16 {
+            for x in min_x as u16..=max_x as u16 {
+                let p = Vec2::new(x as f32, y as f32);
 
-        // Render flat bottom triangle
-        let flat_bottom_inverse_slope_1 = if vertices[1].y - vertices[0].y != 0.0 {
-            (vertices[1].x - vertices[0].x) / (vertices[1].y - vertices[0].y).abs()
-        } else {
-            0.0
-        };
-
-        let flat_bottom_inverse_slope_2 = if vertices[2].y - vertices[0].y != 0.0 {
-            (vertices[2].x - vertices[0].x) / (vertices[2].y - vertices[0].y).abs()
-        } else {
-            0.0
-        };
-
-        if vertices[1].y - vertices[0].y != 0.0 {
-            for y in vertices[0].y as usize..=vertices[1].y as usize {
-                let x0 = vertices[1].x + (y as f32 - vertices[1].y) * flat_bottom_inverse_slope_1;
-                let x1 = vertices[0].x + (y as f32 - vertices[0].y) * flat_bottom_inverse_slope_2;
-
-                let x_start = if x0 < x1 { x0 } else { x1 };
-                let x_end = if x1 > x0 { x1 } else { x0 };
-
-                for x in x_start as usize..=x_end as usize {
+                if triangle.point_inside(p) {
                     self.draw_color_and_depth(
-                        vertices[0],
-                        vertices[1],
-                        vertices[2],
-                        Vec2::new(x as f32, y as f32),
+                        triangle.points[0],
+                        triangle.points[1],
+                        triangle.points[2],
+                        p,
                         color,
                         depth_buffer,
-                    );
-                }
-            }
-        }
-
-        // Render flat top triangle
-        let flat_top_inverse_slope_1 = if vertices[2].y - vertices[1].y != 0.0 {
-            (vertices[2].x - vertices[1].x) / (vertices[2].y - vertices[1].y).abs()
-        } else {
-            0.0
-        };
-
-        let flat_top_inverse_slope_2 = if vertices[2].y - vertices[0].y != 0.0 {
-            (vertices[2].x - vertices[0].x) / (vertices[2].y - vertices[0].y).abs()
-        } else {
-            0.0
-        };
-
-        if vertices[2].y - vertices[1].y != 0.0 {
-            for y in vertices[1].y as usize..=vertices[2].y as usize {
-                let x0 = vertices[1].x + (y as f32 - vertices[1].y) * flat_top_inverse_slope_1;
-                let x1 = vertices[0].x + (y as f32 - vertices[0].y) * flat_top_inverse_slope_2;
-
-                let x_start = if x0 < x1 { x0 as usize } else { x1 as usize };
-                let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
-
-                for x in x_start..=x_end {
-                    self.draw_color_and_depth(
-                        vertices[0],
-                        vertices[1],
-                        vertices[2],
-                        Vec2::new(x as f32, y as f32),
-                        color,
-                        depth_buffer,
-                    );
+                    )
                 }
             }
         }
@@ -243,9 +170,9 @@ impl ColorBuffer {
 
         let color = texture.sample(p_uv) * triangle_color;
 
-        if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as usize, p.y as usize) {
-            self.set(p.x as usize, p.y as usize, color);
-            depth_buffer.set(p.x as usize, p.y as usize, 1.0 - interpolated_reciprocal_w);
+        if 1.0 - interpolated_reciprocal_w < depth_buffer.get(p.x as u16, p.y as u16) {
+            self.set(p.x as u16, p.y as u16, color);
+            depth_buffer.set(p.x as u16, p.y as u16, 1.0 - interpolated_reciprocal_w);
         }
     }
 
@@ -256,106 +183,27 @@ impl ColorBuffer {
         depth_buffer: &mut DepthBuffer,
         flip_v: bool,
     ) {
-        // Floor vertex x and y components to align to pixels and prevent rendering artifacts
-        let mut vertices = [
-            Vertex {
-                pos: Vec4::new(
-                    triangle.points[0].x.floor(),
-                    triangle.points[0].y.floor(),
-                    triangle.points[0].z,
-                    triangle.points[0].w,
-                ),
-                uv: triangle.tex_coords[0],
-            },
-            Vertex {
-                pos: Vec4::new(
-                    triangle.points[1].x.floor(),
-                    triangle.points[1].y.floor(),
-                    triangle.points[1].z,
-                    triangle.points[1].w,
-                ),
-                uv: triangle.tex_coords[1],
-            },
-            Vertex {
-                pos: Vec4::new(
-                    triangle.points[2].x.floor(),
-                    triangle.points[2].y.floor(),
-                    triangle.points[2].z,
-                    triangle.points[2].w,
-                ),
-                uv: triangle.tex_coords[2],
-            },
-        ];
+        let (min_x, min_y, max_x, max_y) = triangle.bounding_box();
 
-        vertices.sort_by(|a, b| a.pos.y.partial_cmp(&b.pos.y).unwrap());
+        for y in min_y as u16..=max_y as u16 {
+            for x in min_x as u16..=max_x as u16 {
+                let p = Vec2::new(x as f32, y as f32);
 
-        // Render flat bottom triangle
-        let flat_bottom_inverse_slope_1 = if vertices[1].pos.y - vertices[0].pos.y != 0.0 {
-            (vertices[1].pos.x - vertices[0].pos.x) / (vertices[1].pos.y - vertices[0].pos.y).abs()
-        } else {
-            0.0
-        };
-
-        let flat_bottom_inverse_slope_2 = if vertices[2].pos.y - vertices[0].pos.y != 0.0 {
-            (vertices[2].pos.x - vertices[0].pos.x) / (vertices[2].pos.y - vertices[0].pos.y).abs()
-        } else {
-            0.0
-        };
-
-        if vertices[1].pos.y - vertices[0].pos.y != 0.0 {
-            for y in vertices[0].pos.y as usize..=vertices[1].pos.y as usize {
-                let x0 = vertices[1].pos.x
-                    + (y as f32 - vertices[1].pos.y) * flat_bottom_inverse_slope_1;
-                let x1 = vertices[0].pos.x
-                    + (y as f32 - vertices[0].pos.y) * flat_bottom_inverse_slope_2;
-
-                let x_start = if x0 < x1 { x0 } else { x1 };
-                let x_end = if x1 > x0 { x1 } else { x0 };
-
-                for x in x_start as usize..=x_end as usize {
+                if triangle.point_inside(p) {
                     self.draw_texel(
-                        vertices[0],
-                        vertices[1],
-                        vertices[2],
-                        Vec2::new(x as f32, y as f32),
-                        texture,
-                        depth_buffer,
-                        flip_v,
-                        triangle.color,
-                    )
-                }
-            }
-        }
-
-        // Render flat top triangle
-        let flat_top_inverse_slope_1 = if vertices[2].pos.y - vertices[1].pos.y != 0.0 {
-            (vertices[2].pos.x - vertices[1].pos.x) / (vertices[2].pos.y - vertices[1].pos.y).abs()
-        } else {
-            0.0
-        };
-
-        let flat_top_inverse_slope_2 = if vertices[2].pos.y - vertices[0].pos.y != 0.0 {
-            (vertices[2].pos.x - vertices[0].pos.x) / (vertices[2].pos.y - vertices[0].pos.y).abs()
-        } else {
-            0.0
-        };
-
-        if vertices[2].pos.y - vertices[1].pos.y != 0.0 {
-            for y in vertices[1].pos.y as usize..=vertices[2].pos.y as usize {
-                let x0 =
-                    vertices[1].pos.x + (y as f32 - vertices[1].pos.y) * flat_top_inverse_slope_1;
-                let x1 =
-                    vertices[0].pos.x + (y as f32 - vertices[0].pos.y) * flat_top_inverse_slope_2;
-
-                let x_start = if x0 < x1 { x0 as usize } else { x1 as usize };
-                let x_end = if x1 > x0 { x1 as usize } else { x0 as usize };
-
-                for x in x_start..=x_end {
-                    self.draw_texel(
-                        vertices[0],
-                        vertices[1],
-                        vertices[2],
-                        Vec2::new(x as f32, y as f32),
+                        Vertex {
+                            pos: triangle.points[0],
+                            uv: triangle.tex_coords[0],
+                        },
+                        Vertex {
+                            pos: triangle.points[1],
+                            uv: triangle.tex_coords[1],
+                        },
+                        Vertex {
+                            pos: triangle.points[2],
+                            uv: triangle.tex_coords[2],
+                        },
+                        p,
                         texture,
                         depth_buffer,
                         flip_v,

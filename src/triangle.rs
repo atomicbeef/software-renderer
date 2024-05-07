@@ -1,6 +1,6 @@
 use crate::color::Color;
 use crate::texture::Tex2;
-use crate::vector::Vec4;
+use crate::vector::{Vec2, Vec4};
 
 pub struct Face {
     pub a: u16,
@@ -62,5 +62,34 @@ impl Triangle {
             tex_coords: [a_uv, b_uv, c_uv],
             color,
         }
+    }
+
+    pub fn bounding_box(&self) -> (f32, f32, f32, f32) {
+        let a = self.points[0];
+        let b = self.points[1];
+        let c = self.points[2];
+
+        let min_x = a.x.min(b.x.min(c.x));
+        let min_y = a.y.min(b.y.min(c.y));
+
+        let max_x = a.x.max(b.x.max(c.x));
+        let max_y = a.y.max(b.y.max(c.y));
+
+        (min_x, min_y, max_x, max_y)
+    }
+
+    fn point_inside_edge(a: Vec2, b: Vec2, p: Vec2) -> bool {
+        let edge = b - a;
+        edge.cross(p - a) >= 0.0
+    }
+
+    pub fn point_inside(&self, p: Vec2) -> bool {
+        let a = Vec2::from(self.points[0]);
+        let b = Vec2::from(self.points[1]);
+        let c = Vec2::from(self.points[2]);
+
+        Self::point_inside_edge(a, b, p)
+            && Self::point_inside_edge(b, c, p)
+            && Self::point_inside_edge(c, a, p)
     }
 }

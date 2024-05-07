@@ -34,8 +34,8 @@ use texture::Texture;
 use triangle::Triangle;
 use vector::{Vec2, Vec3};
 
-const RENDER_WIDTH: usize = 512;
-const RENDER_HEIGHT: usize = 384;
+const RENDER_WIDTH: u16 = 512;
+const RENDER_HEIGHT: u16 = 384;
 const WINDOW_WIDTH: usize = 1024;
 const WINDOW_HEIGHT: usize = 768;
 
@@ -271,8 +271,8 @@ fn main() -> ExitCode {
         window
             .update_with_buffer(
                 color_buffer.buffer(),
-                color_buffer.width(),
-                color_buffer.height(),
+                color_buffer.width() as usize,
+                color_buffer.height() as usize,
             )
             .unwrap();
 

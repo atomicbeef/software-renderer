@@ -1,13 +1,13 @@
 pub struct DepthBuffer {
     buffer: Vec<f32>,
-    width: usize,
-    height: usize,
+    width: u16,
+    height: u16,
 }
 
 impl DepthBuffer {
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn new(width: u16, height: u16) -> Self {
         Self {
-            buffer: vec![1.0; width * height],
+            buffer: vec![1.0; width as usize * height as usize],
             width,
             height,
         }
@@ -17,17 +17,17 @@ impl DepthBuffer {
         self.buffer.fill(depth);
     }
 
-    pub fn get(&self, x: usize, y: usize) -> f32 {
+    pub fn get(&self, x: u16, y: u16) -> f32 {
         assert!(x < self.width);
         assert!(y < self.height);
 
-        self.buffer[self.width * y + x]
+        self.buffer[self.width as usize * y as usize + x as usize]
     }
 
-    pub fn set(&mut self, x: usize, y: usize, depth: f32) {
+    pub fn set(&mut self, x: u16, y: u16, depth: f32) {
         assert!(x < self.width);
         assert!(y < self.height);
 
-        self.buffer[self.width * y + x] = depth;
+        self.buffer[self.width as usize * y as usize + x as usize] = depth;
     }
 }

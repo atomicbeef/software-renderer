@@ -34,8 +34,8 @@ pub struct RenderSettings {
     pub rotation: Vec3,
     pub scale: bool,
     pub flip_uvs_vertically: bool,
-    pub render_width: usize,
-    pub render_height: usize,
+    pub render_width: u16,
+    pub render_height: u16,
 }
 
 pub fn prepare_triangles(
@@ -191,8 +191,8 @@ pub fn render(
 
             if matches!(settings.render_mode, RenderMode::WireframeVertex) {
                 color_buffer.draw_rect(
-                    point.x as usize,
-                    point.y as usize,
+                    point.x as u16,
+                    point.y as u16,
                     2,
                     2,
                     Color::new(0, 0xFF, 0),
