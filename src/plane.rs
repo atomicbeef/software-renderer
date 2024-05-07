@@ -3,7 +3,7 @@ use crate::{
     vector::Vec4,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Plane {
     Left,
     Right,
@@ -24,7 +24,7 @@ impl Plane {
             Plane::Top => point.y <= point.w,
             Plane::Bottom => point.y >= -point.w,
             Plane::Far => point.z <= point.w,
-            Plane::Near => point.z >= -point.w,
+            Plane::Near => point.z >= 0.0,
             // Prevent division by 0 if clipping produces coordinate with w = 0
             Plane::W => point.w >= W_EPSILON,
         }
@@ -75,11 +75,7 @@ impl Plane {
                             / ((previous_vert.pos.w - previous_vert.pos.z)
                                 - (vert.pos.w - vert.pos.z))
                     }
-                    Plane::Near => {
-                        (previous_vert.pos.w + previous_vert.pos.z)
-                            / ((previous_vert.pos.w + previous_vert.pos.z)
-                                - (vert.pos.w + vert.pos.z))
-                    }
+                    Plane::Near => previous_vert.pos.z / (previous_vert.pos.z - vert.pos.z),
                     Plane::W => {
                         (W_EPSILON - previous_vert.pos.w) / (previous_vert.pos.w - vert.pos.w)
                     }
