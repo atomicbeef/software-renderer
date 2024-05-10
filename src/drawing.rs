@@ -39,8 +39,8 @@ impl ColorBuffer {
     }
 
     pub fn draw_rect(&mut self, x: u16, y: u16, width: u16, height: u16, color: Color) {
-        for xi in 0..width {
-            for yi in 0..height {
+        for xi in 0..width.min(self.width() - x) {
+            for yi in 0..height.min(self.height() - y) {
                 self.set(x + xi, y + yi, color);
             }
         }
