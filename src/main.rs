@@ -32,7 +32,7 @@ use scene::reader::read_objects_from_scene;
 use scene::{Object, Scene};
 use texture::Texture;
 use triangle::Triangle;
-use vector::{Vec2, Vec3};
+use vector::Vec3;
 
 const RENDER_WIDTH: u16 = 512;
 const RENDER_HEIGHT: u16 = 384;
@@ -157,6 +157,9 @@ fn main() -> ExitCode {
         } else if window.is_key_pressed(Key::Key6, KeyRepeat::No) {
             render_settings.render_mode = RenderMode::WireframeTextured;
             println!("Rendering textured triangles with wireframe");
+        } else if window.is_key_pressed(Key::Key7, KeyRepeat::No) {
+            render_settings.render_mode = RenderMode::Depth;
+            println!("Rendering depth buffer");
         }
 
         if window.is_key_pressed(Key::C, KeyRepeat::No) {

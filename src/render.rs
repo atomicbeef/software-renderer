@@ -22,6 +22,7 @@ pub enum RenderMode {
     Filled,
     WireframeTextured,
     Textured,
+    Depth,
 }
 
 #[derive(Clone, Copy)]
@@ -204,7 +205,7 @@ pub fn render(
             RenderMode::Wireframe | RenderMode::WireframeVertex => {
                 color_buffer.draw_triangle(triangle, Color::new(0, 0xFF, 0));
             }
-            RenderMode::Filled => {
+            RenderMode::Filled | RenderMode::Depth => {
                 color_buffer.draw_filled_triangle(triangle, triangle.color, depth_buffer);
             }
             RenderMode::WireframeFilled => {
@@ -227,5 +228,14 @@ pub fn render(
                 );
             }
         };
+    }
+
+    if settings.render_mode == RenderMode::Depth {
+        for i in 0..color_buffer.buffer().len() {
+            let depth = (depth_buffer.buffer()[i] * 255.0).floor() as u8;
+            let color = Color::new(depth, depth, depth);
+
+            color_buffer.set_index(i, color);
+        }
     }
 }

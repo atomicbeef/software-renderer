@@ -37,4 +37,8 @@ impl ColorBuffer {
 
         self.buffer[self.width as usize * y as usize + x as usize] = color.into();
     }
+
+    pub fn set_index(&mut self, i: usize, color: Color) {
+        self.buffer[i] = color.into();
+    }
 }

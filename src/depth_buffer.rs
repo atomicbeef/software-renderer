@@ -13,6 +13,10 @@ impl DepthBuffer {
         }
     }
 
+    pub fn buffer(&self) -> &[f32] {
+        &self.buffer
+    }
+
     pub fn clear(&mut self, depth: f32) {
         self.buffer.fill(depth);
     }
