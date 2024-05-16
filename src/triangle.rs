@@ -1,6 +1,8 @@
+use std::ops::{Add, Sub};
+
 use crate::color::Color;
 use crate::texture::Tex2;
-use crate::vector::{Vec2, Vec4};
+use crate::vector::Vec4;
 
 pub struct Face {
     pub a: u16,
@@ -35,8 +37,72 @@ impl Face {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub struct RasterPoint {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl RasterPoint {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    pub fn cross(&self, b: Self) -> i32 {
+        self.x * b.y - self.y * b.x
+    }
+
+    pub fn edge_weight(&self, a: Self, b: Self, bias: i32) -> i32 {
+        let ab = b - a;
+        let ap = *self - a;
+        ab.cross(ap) + bias
+    }
+
+    /// Returns 0 if an edge is flat top or left, otherwise returns -1
+    pub fn edge_orientation(a: Self, b: Self) -> i32 {
+        let is_flat_top = b.y - a.y == 0 && b.x - a.x > 0;
+        let is_left = b.y - a.y < 0;
+
+        if is_flat_top || is_left {
+            0
+        } else {
+            -1
+        }
+    }
+}
+
+impl Add<RasterPoint> for RasterPoint {
+    type Output = RasterPoint;
+
+    fn add(self, rhs: RasterPoint) -> Self::Output {
+        Self::Output {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Sub<RasterPoint> for RasterPoint {
+    type Output = RasterPoint;
+
+    fn sub(self, rhs: RasterPoint) -> Self::Output {
+        Self::Output {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct VertexPos {
+    pub x: i32,
+    pub y: i32,
+    pub z: f32,
+    pub w: f32,
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Vertex {
-    pub pos: Vec4,
+    pub pos: VertexPos,
     pub uv: Tex2,
 }
 
@@ -64,7 +130,7 @@ impl Triangle {
         }
     }
 
-    pub fn bounding_box(&self) -> (f32, f32, f32, f32) {
+    pub fn bounding_box(&self) -> (u16, u16, u16, u16) {
         let a = self.points[0];
         let b = self.points[1];
         let c = self.points[2];
@@ -75,21 +141,11 @@ impl Triangle {
         let max_x = a.x.max(b.x.max(c.x));
         let max_y = a.y.max(b.y.max(c.y));
 
-        (min_x, min_y, max_x, max_y)
-    }
-
-    fn point_inside_edge(a: Vec2, b: Vec2, p: Vec2) -> bool {
-        let edge = b - a;
-        edge.cross(p - a) >= 0.0
-    }
-
-    pub fn point_inside(&self, p: Vec2) -> bool {
-        let a = Vec2::from(self.points[0]);
-        let b = Vec2::from(self.points[1]);
-        let c = Vec2::from(self.points[2]);
-
-        Self::point_inside_edge(a, b, p)
-            && Self::point_inside_edge(b, c, p)
-            && Self::point_inside_edge(c, a, p)
+        (
+            min_x.floor() as u16,
+            min_y.floor() as u16,
+            max_x.ceil() as u16,
+            max_y.ceil() as u16,
+        )
     }
 }

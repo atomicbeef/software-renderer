@@ -1,6 +1,7 @@
 use crate::matrix::Mat4;
 use crate::vector::{Vec3, Vec4};
 
+#[derive(Debug)]
 pub struct Camera {
     pub translation: Vec3,
     pub up: Vec3,
