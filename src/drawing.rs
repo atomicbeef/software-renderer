@@ -113,14 +113,26 @@ impl ColorBuffer {
         let bias_2 = RasterPoint::edge_orientation(b_point, c_point);
         let bias_3 = RasterPoint::edge_orientation(c_point, a_point);
 
+        let delta_w0_x = a_point.y - b_point.y;
+        let delta_w0_y = b_point.x - a_point.x;
+
+        let delta_w1_x = b_point.y - c_point.y;
+        let delta_w1_y = c_point.x - b_point.x;
+
+        let delta_w2_x = c_point.y - a_point.y;
+        let delta_w2_y = a_point.x - c_point.x;
+
+        let p0 = RasterPoint::new(min_x as i32, min_y as i32);
+        let mut w0_row = p0.edge_weight(a_point, b_point, bias_1);
+        let mut w1_row = p0.edge_weight(b_point, c_point, bias_2);
+        let mut w2_row = p0.edge_weight(c_point, a_point, bias_3);
+
         for y in min_y..=max_y {
+            let mut w0 = w0_row;
+            let mut w1 = w1_row;
+            let mut w2 = w2_row;
+
             for x in min_x..=max_x {
-                let p = RasterPoint::new(x as i32, y as i32);
-
-                let w0 = p.edge_weight(a_point, b_point, bias_1);
-                let w1 = p.edge_weight(b_point, c_point, bias_2);
-                let w2 = p.edge_weight(c_point, a_point, bias_3);
-
                 if w0 >= 0 && w1 >= 0 && w2 >= 0 {
                     let alpha = w1 as f32 / area as f32;
                     let beta = w2 as f32 / area as f32;
@@ -134,7 +146,15 @@ impl ColorBuffer {
                         depth_buffer.set(x, y, 1.0 - interpolated_reciprocal_w);
                     }
                 }
+
+                w0 += delta_w0_x;
+                w1 += delta_w1_x;
+                w2 += delta_w2_x;
             }
+
+            w0_row += delta_w0_y;
+            w1_row += delta_w1_y;
+            w2_row += delta_w2_y;
         }
     }
 
@@ -177,14 +197,26 @@ impl ColorBuffer {
         let bias_2 = RasterPoint::edge_orientation(b_point, c_point);
         let bias_3 = RasterPoint::edge_orientation(c_point, a_point);
 
+        let delta_w0_x = a_point.y - b_point.y;
+        let delta_w0_y = b_point.x - a_point.x;
+
+        let delta_w1_x = b_point.y - c_point.y;
+        let delta_w1_y = c_point.x - b_point.x;
+
+        let delta_w2_x = c_point.y - a_point.y;
+        let delta_w2_y = a_point.x - c_point.x;
+
+        let p0 = RasterPoint::new(min_x as i32, min_y as i32);
+        let mut w0_row = p0.edge_weight(a_point, b_point, bias_1);
+        let mut w1_row = p0.edge_weight(b_point, c_point, bias_2);
+        let mut w2_row = p0.edge_weight(c_point, a_point, bias_3);
+
         for y in min_y..=max_y {
+            let mut w0 = w0_row;
+            let mut w1 = w1_row;
+            let mut w2 = w2_row;
+
             for x in min_x..=max_x {
-                let p = RasterPoint::new(x as i32, y as i32);
-
-                let w0 = p.edge_weight(a_point, b_point, bias_1);
-                let w1 = p.edge_weight(b_point, c_point, bias_2);
-                let w2 = p.edge_weight(c_point, a_point, bias_3);
-
                 if w0 >= 0 && w1 >= 0 && w2 >= 0 {
                     let alpha = w1 as f32 / area as f32;
                     let beta = w2 as f32 / area as f32;
@@ -209,7 +241,15 @@ impl ColorBuffer {
                         depth_buffer.set(x, y, 1.0 - interpolated_reciprocal_w);
                     }
                 }
+
+                w0 += delta_w0_x;
+                w1 += delta_w1_x;
+                w2 += delta_w2_x;
             }
+
+            w0_row += delta_w0_y;
+            w1_row += delta_w1_y;
+            w2_row += delta_w2_y;
         }
     }
 }
