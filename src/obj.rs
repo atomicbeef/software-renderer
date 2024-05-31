@@ -2,6 +2,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
+use tinyvec::ArrayVec;
+
 use crate::color::Color;
 use crate::mesh::Mesh;
 use crate::texture::Tex2;
@@ -10,6 +12,11 @@ use crate::vector::Vec3;
 
 #[derive(Debug)]
 struct FileFormatError;
+
+pub enum FaceParsingOutput {
+    One(Face),
+    Two((Face, Face)),
+}
 
 fn read_vertex(line: &str) -> Result<Vec3, FileFormatError> {
     let mut positions: [f32; 3] = [0.0; 3];
@@ -54,17 +61,21 @@ fn read_uv(line: &str) -> Result<Tex2, FileFormatError> {
     Ok(Tex2::new(uv[0], 1.0 - uv[1]))
 }
 
-fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face, FileFormatError> {
-    let mut vertex_indices: [u16; 3] = [0; 3];
-    let mut vertex_uvs: [u16; 3] = [0; 3];
+fn read_faces(
+    line: &str,
+    num_vertices: u16,
+    num_vertex_uvs: u16,
+) -> Result<FaceParsingOutput, FileFormatError> {
+    let mut vertex_indices: ArrayVec<[u16; 4]> = ArrayVec::new();
+    let mut vertex_uvs: ArrayVec<[u16; 4]> = ArrayVec::new();
 
     // A face line should look like this:
-    // f <vertex index>/<uv index> <vertex index>/<uv index> <vertex index>/<uv index>
-    for (i, indices_str) in line
+    // f <vertex index>/<uv index> <vertex index>/<uv index> <vertex index>/<uv index> [vertex index]/[uv_index]
+    for (_, indices_str) in line
         .split_ascii_whitespace()
         .skip(1)
         .enumerate()
-        .take_while(|(i, _)| *i < 3)
+        .take_while(|(i, _)| *i < 4)
     {
         let mut vertex_index_str = indices_str.split('/');
 
@@ -73,9 +84,9 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
             Ok(vertex_index) => {
                 if vertex_index > 0 {
                     // Indices start at 1 for OBJ files
-                    vertex_indices[i] = (vertex_index as u16) - 1;
+                    vertex_indices.push((vertex_index as u16) - 1);
                 } else {
-                    vertex_indices[i] = num_vertices - vertex_index as u16 - 1;
+                    vertex_indices.push(num_vertices - vertex_index as u16 - 1);
                 }
             }
             Err(_) => {
@@ -88,9 +99,9 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
             match uv_index_str.parse::<i32>() {
                 Ok(uv_index) => {
                     if uv_index > 0 {
-                        vertex_uvs[i] = (uv_index as u16) - 1;
+                        vertex_uvs.push((uv_index as u16) - 1);
                     } else {
-                        vertex_uvs[i] = num_vertex_uvs - uv_index as u16 - 1;
+                        vertex_uvs.push(num_vertex_uvs - uv_index as u16 - 1);
                     }
                 }
                 Err(_) => {
@@ -100,19 +111,40 @@ fn read_face(line: &str, num_vertices: u16, num_vertex_uvs: u16) -> Result<Face,
         }
     }
 
-    if vertex_indices.len() != 3 {
+    if vertex_indices.len() == 3 {
+        return Ok(FaceParsingOutput::One(Face::new(
+            vertex_indices[0],
+            vertex_indices[1],
+            vertex_indices[2],
+            vertex_uvs[0],
+            vertex_uvs[1],
+            vertex_uvs[2],
+            Color::new(0, 0xFF, 0xFF),
+        )));
+    } else if vertex_indices.len() == 4 {
+        return Ok(FaceParsingOutput::Two((
+            Face::new(
+                vertex_indices[0],
+                vertex_indices[1],
+                vertex_indices[2],
+                vertex_uvs[0],
+                vertex_uvs[1],
+                vertex_uvs[2],
+                Color::new(0, 0xFF, 0xFF),
+            ),
+            Face::new(
+                vertex_indices[2],
+                vertex_indices[3],
+                vertex_indices[0],
+                vertex_uvs[2],
+                vertex_uvs[3],
+                vertex_uvs[0],
+                Color::new(0, 0xFF, 0xFF),
+            ),
+        )));
+    } else {
         return Err(FileFormatError);
     }
-
-    Ok(Face::new(
-        vertex_indices[0],
-        vertex_indices[1],
-        vertex_indices[2],
-        vertex_uvs[0],
-        vertex_uvs[1],
-        vertex_uvs[2],
-        Color::new(0, 0xFF, 0xFF),
-    ))
 }
 
 impl Mesh {
@@ -135,9 +167,19 @@ impl Mesh {
                     .expect(format!("Could not read vertex UV from line {}!", &line).as_str());
                 vertex_uvs.push(uv);
             } else if line.starts_with("f ") {
-                let face = read_face(&line, vertices.len() as u16, vertex_uvs.len() as u16)
-                    .expect(format!("Could not read face from line {}!", &line).as_str());
-                faces.push(face);
+                let face_parsing_output =
+                    read_faces(&line, vertices.len() as u16, vertex_uvs.len() as u16)
+                        .expect(format!("Could not read face(s) from line {}!", &line).as_str());
+
+                match face_parsing_output {
+                    FaceParsingOutput::One(face) => {
+                        faces.push(face);
+                    }
+                    FaceParsingOutput::Two(parsed_faces) => {
+                        faces.push(parsed_faces.0);
+                        faces.push(parsed_faces.1);
+                    }
+                }
             }
         }
 
