@@ -1,6 +1,5 @@
-use std::ops::{Add, Sub};
-
 use crate::color::Color;
+use crate::fixed::FixedI32;
 use crate::texture::Tex2;
 use crate::vector::Vec4;
 
@@ -37,65 +36,9 @@ impl Face {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct RasterPoint {
-    pub x: i32,
-    pub y: i32,
-}
-
-impl RasterPoint {
-    pub fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-
-    pub fn cross(&self, b: Self) -> i32 {
-        self.x * b.y - self.y * b.x
-    }
-
-    pub fn edge_weight(&self, a: Self, b: Self, bias: i32) -> i32 {
-        let ab = b - a;
-        let ap = *self - a;
-        ab.cross(ap) + bias
-    }
-
-    /// Returns 0 if an edge is flat top or left, otherwise returns -1
-    pub fn edge_orientation(a: Self, b: Self) -> i32 {
-        let is_flat_top = b.y - a.y == 0 && b.x - a.x > 0;
-        let is_left = b.y - a.y < 0;
-
-        if is_flat_top || is_left {
-            0
-        } else {
-            -1
-        }
-    }
-}
-
-impl Add<RasterPoint> for RasterPoint {
-    type Output = RasterPoint;
-
-    fn add(self, rhs: RasterPoint) -> Self::Output {
-        Self::Output {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
-impl Sub<RasterPoint> for RasterPoint {
-    type Output = RasterPoint;
-
-    fn sub(self, rhs: RasterPoint) -> Self::Output {
-        Self::Output {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
 pub struct VertexPos {
-    pub x: i32,
-    pub y: i32,
+    pub x: FixedI32,
+    pub y: FixedI32,
     pub z: f32,
     pub w: f32,
 }

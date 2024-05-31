@@ -117,13 +117,21 @@ impl Scene {
             camera_movement_direction.y -= 1.0;
         }
 
+        let movement_modifier = if window.is_key_down(Key::LeftShift) {
+            2.0
+        } else {
+            1.0
+        };
+
         // Make movement relative to camera direction
         let camera_movement_direction_transformed = camera_movement_direction
             .rotated_x(self.camera.pitch)
             .rotated_y(self.camera.yaw)
             .normalized_or_zero();
 
-        self.camera.translation +=
-            camera_movement_direction_transformed * CAMERA_MOVEMENT_SPEED * delta_time;
+        self.camera.translation += camera_movement_direction_transformed
+            * CAMERA_MOVEMENT_SPEED
+            * movement_modifier
+            * delta_time;
     }
 }

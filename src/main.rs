@@ -14,6 +14,7 @@ mod color;
 mod color_buffer;
 mod depth_buffer;
 mod drawing;
+mod fixed;
 mod matrix;
 mod mesh;
 mod obj;
