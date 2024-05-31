@@ -10,6 +10,7 @@ A 3D renderer written in Rust. Entirely software based, so no graphics card need
 - Controllable model translation, rotation, and scaling
 - Projective space clipping
 - Rendering of scenes defined in JSON
+- Subpixel rasterization
 
 # Usage
 `cargo run --release <path to mesh.obj or scene.json>`
@@ -26,12 +27,14 @@ A 3D renderer written in Rust. Entirely software based, so no graphics card need
 | Right arrow  | Rotate camera right       |
 | Up arrow     | Rotate camera up          |
 | Down arrow   | Rotate camera down        |
+| Left shift   | Move camera faster        |
 | 1            | Vertex rendering with wireframe     |
 | 2            | Wireframe rendering        |
 | 3            | Filled face rendering     |
 | 4            | Filled face rendering with wireframe         |
 | 5            | Textured rendering     |
 | 6            | Textured rendering with wireframe |
+| 7            | Depth buffer view                 |
 | C            | Toggle backface culling         |
 | L            | Enable shading     |
 | U            | Disable shading |
@@ -50,4 +53,4 @@ A 3D renderer written in Rust. Entirely software based, so no graphics card need
 ![image](https://github.com/atomicbeef/software-renderer/assets/10298038/3840b2d6-9ee2-4522-8d5c-4eb695755295)
 
 # Limitations
-- No subpixel rendering
+Some very small cracks can be seen occasionally between triangles with shared edges. I'm not sure what the exact cause of this is, but it's probably because of some imprecision introduced during rasterization. [This Reddit thread](https://www.reddit.com/r/GraphicsProgramming/comments/1cz6tqo/holes_in_shared_edges_of_triangles_in_software/) might be useful to anyone suffering from the same problems, but I ultimately couldn't figure out how to fix this myself. If you think you know how it could be fixed, I'd love to hear your thoughts!
