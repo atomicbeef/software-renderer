@@ -73,7 +73,7 @@ impl Triangle {
         }
     }
 
-    pub fn bounding_box(&self) -> (u16, u16, u16, u16) {
+    pub fn bounding_box(&self) -> (f32, f32, f32, f32) {
         let a = self.points[0];
         let b = self.points[1];
         let c = self.points[2];
@@ -84,11 +84,6 @@ impl Triangle {
         let max_x = a.x.max(b.x.max(c.x));
         let max_y = a.y.max(b.y.max(c.y));
 
-        (
-            min_x.floor() as u16,
-            min_y.floor() as u16,
-            max_x.ceil() as u16,
-            max_y.ceil() as u16,
-        )
+        (min_x.floor(), min_y.floor(), max_x.ceil(), max_y.ceil())
     }
 }

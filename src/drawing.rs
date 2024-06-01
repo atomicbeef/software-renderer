@@ -161,6 +161,10 @@ impl ColorBuffer {
         mut fill: F,
     ) {
         let (min_x, min_y, max_x, max_y) = triangle.bounding_box();
+        let min_x = (min_x - 1.0).floor().max(0.0) as u16;
+        let min_y = (min_y - 1.0).floor().max(0.0) as u16;
+        let max_x = (max_x + 1.0).ceil().min((self.width() - 1) as f32) as u16;
+        let max_y = (max_y + 1.0).ceil().min((self.height() - 1) as f32) as u16;
 
         let a = RasterPoint::new(
             FixedI32::from_f32_lossy(triangle.points[0].x),
