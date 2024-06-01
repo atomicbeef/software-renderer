@@ -48,9 +48,11 @@ A 3D renderer written in Rust. Entirely software based, so no graphics card need
 | F            | Flip texture UVs (useful if the model's texture is upside down) |
 
 # Screenshots
-![image](https://github.com/atomicbeef/software-renderer/assets/10298038/027fdca8-e1d4-4345-b784-d2c3817a12eb)
-![image](https://github.com/atomicbeef/software-renderer/assets/10298038/72a3210e-9790-4f28-b775-b5322b47f690)
-![image](https://github.com/atomicbeef/software-renderer/assets/10298038/3840b2d6-9ee2-4522-8d5c-4eb695755295)
+<img width="595" alt="Jets Wireframe" src="https://github.com/atomicbeef/software-renderer/assets/10298038/62891cae-5ee6-4123-a5bd-1113a511e1e9">
+<img width="718" alt="Jets Unlit" src="https://github.com/atomicbeef/software-renderer/assets/10298038/cb320b58-8b2a-4e78-8b4e-89f1600cc71b">
+<img width="441" alt="Sphere" src="https://github.com/atomicbeef/software-renderer/assets/10298038/e6e4ec0e-5205-4a8b-a11d-8b9e0f5859d0">
+<img width="488" alt="Crab Lit" src="https://github.com/atomicbeef/software-renderer/assets/10298038/04240a35-7086-4802-8cdf-f13bc30bc741">
+<img width="509" alt="Crab Depth" src="https://github.com/atomicbeef/software-renderer/assets/10298038/092178a0-01a1-407f-af99-a44d71dbce4a">
 
 # Limitations
 Some very small cracks can be seen occasionally between triangles with shared edges. I'm not sure what the exact cause of this is, but it's probably because of some imprecision introduced during rasterization. [This Reddit thread](https://www.reddit.com/r/GraphicsProgramming/comments/1cz6tqo/holes_in_shared_edges_of_triangles_in_software/) might be useful to anyone suffering from the same problems, but I ultimately couldn't figure out how to fix this myself. If you think you know how it could be fixed, I'd love to hear your thoughts!
