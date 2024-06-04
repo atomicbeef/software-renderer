@@ -53,6 +53,3 @@ A 3D renderer written in Rust. Entirely software based, so no graphics card need
 <img width="441" alt="Sphere" src="https://github.com/atomicbeef/software-renderer/assets/10298038/e6e4ec0e-5205-4a8b-a11d-8b9e0f5859d0">
 <img width="488" alt="Crab Lit" src="https://github.com/atomicbeef/software-renderer/assets/10298038/04240a35-7086-4802-8cdf-f13bc30bc741">
 <img width="509" alt="Crab Depth" src="https://github.com/atomicbeef/software-renderer/assets/10298038/092178a0-01a1-407f-af99-a44d71dbce4a">
-
-# Limitations
-Some very small cracks can be seen occasionally between triangles with shared edges. I'm not sure what the exact cause of this is, but it's probably because of some imprecision introduced during rasterization. [This Reddit thread](https://www.reddit.com/r/GraphicsProgramming/comments/1cz6tqo/holes_in_shared_edges_of_triangles_in_software/) might be useful to anyone suffering from the same problems, but I ultimately couldn't figure out how to fix this myself. If you think you know how it could be fixed, I'd love to hear your thoughts!
