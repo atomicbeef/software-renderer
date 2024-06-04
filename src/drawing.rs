@@ -51,10 +51,14 @@ impl RasterPoint {
     }
 
     pub fn edge_weight(&self, a: Self, b: Self, bias: FixedI32) -> FixedI32 {
-        let ab = b - a;
-        let ap = *self - a;
-
-        ab.cross(ap) + bias
+        // Computing the edge weight this way reduces imprecision compared to
+        // naively computing AB x AP + bias. Doing the naive computation results
+        // in nasty holes along shared edges of triangles.
+        // The equation was taken from here: https://observablehq.com/@mourner/non-robust-arithmetic-as-art
+        (a.x * b.y - a.y * b.x)
+            + (b.x * self.y - b.y * self.x)
+            + (self.x * a.y - self.y * a.x)
+            + bias
     }
 
     /// Returns 0 if an edge is flat top or left, otherwise returns -1
@@ -161,10 +165,10 @@ impl ColorBuffer {
         mut fill: F,
     ) {
         let (min_x, min_y, max_x, max_y) = triangle.bounding_box();
-        let min_x = (min_x - 1.0).floor().max(0.0) as u16;
-        let min_y = (min_y - 1.0).floor().max(0.0) as u16;
-        let max_x = (max_x + 1.0).ceil().min((self.width() - 1) as f32) as u16;
-        let max_y = (max_y + 1.0).ceil().min((self.height() - 1) as f32) as u16;
+        let min_x = min_x.floor().max(0.0) as u16;
+        let min_y = min_y.floor().max(0.0) as u16;
+        let max_x = max_x.ceil().min((self.width() - 1) as f32) as u16;
+        let max_y = max_y.ceil().min((self.height() - 1) as f32) as u16;
 
         let a = RasterPoint::new(
             FixedI32::from_f32_lossy(triangle.points[0].x),
